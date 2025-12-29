@@ -11,6 +11,9 @@ from services.clippings_service import ClippingsService
 from ui.widgets import EmptyStateWidget, ClippingsTableWidget, SearchBar
 from datetime import datetime
 
+from ui.settings_dialog import SettingsDialog
+from utils.config_manager import get_config_manager
+
 class MainWindow(QMainWindow):
     """
     The main application window for the Kindle Clippings Manager.
@@ -22,6 +25,7 @@ class MainWindow(QMainWindow):
     """
     def __init__(self):
         super().__init__()
+        self.config = get_config_manager()
         self.setWindowTitle("Kindle Clippings Manager")
         self.resize(1200, 800)
         
@@ -117,20 +121,44 @@ class MainWindow(QMainWindow):
         self.btn_export.setEnabled(False)
         self.btn_export.setObjectName("primaryBtn")
         
+        self.btn_settings = QPushButton("⚙️")
+        self.btn_settings.setFixedSize(40, 36) # Squaresh
+        self.btn_settings.setToolTip("Settings")
+        self.btn_settings.clicked.connect(self.open_settings)
+        self.btn_settings.setCursor(Qt.PointingHandCursor)
+        
         header.addWidget(self.btn_load)
         header.addWidget(self.btn_export)
+        header.addWidget(self.btn_settings)
         
         self.main_layout.addLayout(header)
 
+    def open_settings(self):
+        """Opens the Settings Dialog."""
+        dlg = SettingsDialog(self)
+        if dlg.exec_():
+            # If settings changed (like language), we might want to refresh if file is loaded
+            # For now, just logging or status update could be fine
+            pass
+
     def check_autoload(self):
-        """Checks for 'data/My Clippings.txt' and loads it if exists."""
+        """Checks for configured input file."""
+        input_file = self.config.get('input_file', "")
+        if input_file and os.path.exists(input_file):
+            self.load_file(input_file)
+            return
+
+        # Fallback to hardcoded default if config not set
         default_path = os.path.join("data", "My Clippings.txt")
         if os.path.exists(default_path):
             self.load_file(default_path)
 
     def load_file_dialog(self):
         """Opens a file dialog for the user to select the clippings file."""
-        file_path, _ = QFileDialog.getOpenFileName(self, "Select File", "", "Text Files (*.txt)")
+        current_input = self.config.get('input_file', "")
+        start_dir = os.path.dirname(current_input) if current_input else ""
+        
+        file_path, _ = QFileDialog.getOpenFileName(self, "Select File", start_dir, "Text Files (*.txt)")
         if file_path:
             self.load_file(file_path)
 
@@ -146,15 +174,16 @@ class MainWindow(QMainWindow):
         QApplication.processEvents()
 
         try:
-            # TODO: Make language configurable via settings
-            parser = KindleClippingsParser(language_code='es')
+            # Update config
+            self.config.set('input_file', file_path)
+            
+            lang = self.config.get('language', 'es')
+            parser = KindleClippingsParser(language_code=lang)
             self.clippings = parser.parse_file(file_path)
             
             self.table.populate(self.clippings)
             self.stack.setCurrentWidget(self.data_page)
             self.btn_export.setEnabled(True)
-            
-            # Initial stat update happens via signal from populate()
             
         except Exception as e:
             QMessageBox.critical(self, "Error", f"Error reading file:\n{str(e)}")
@@ -204,7 +233,12 @@ class MainWindow(QMainWindow):
         if not rows_indices:
             return
 
-        file_path, _ = QFileDialog.getSaveFileName(self, title, "", "Joplin Export (*.jex)")
+        default_output = self.config.get("output_file", "import_clippings")
+        # Ensure extension if missing from config
+        if not default_output.endswith('.jex'):
+             default_output += ".jex"
+
+        file_path, _ = QFileDialog.getSaveFileName(self, title, default_output, "Joplin Export (*.jex)")
         if not file_path:
             return
             
@@ -218,37 +252,30 @@ class MainWindow(QMainWindow):
         QApplication.processEvents()
 
         try:
+            from dataclasses import replace
             export_list = []
             for r in rows_indices:
-                # Retrieve data from table columns
-                d_str = self.table.item(r, 0).text()
-                try:
-                    dt = datetime.strptime(d_str, '%Y-%m-%d %H:%M')
-                except:
-                    dt = datetime.now()
+                # Retrieve full object from 1st column UserRole
+                item_0 = self.table.item(r, 0)
+                original_clip = item_0.data(Qt.UserRole)
                 
-                # Use UserRole for full content
-                content = self.table.item(r, 3).data(Qt.UserRole)
-                tags_str = self.table.item(r, 5).text()
-                tags_list = [t.strip() for t in tags_str.split(',') if t.strip()]
+                if not original_clip:
+                    continue
                 
-                c = Clipping(
-                    content=content,
-                    book_title=self.table.item(r, 1).text(),
-                    author=self.table.item(r, 2).text(),
-                    page=self.table.item(r, 4).text(),
-                    date_time=dt,
-                    tags=tags_list
-                )
-                export_list.append(c)
+                # Retrieve potentially edited content from Content column UserRole
+                edited_content = self.table.item(r, 3).data(Qt.UserRole)
+                
+                # Create final object with edited content (preserving everything else)
+                final_clip = replace(original_clip, content=edited_content)
+                export_list.append(final_clip)
 
-            service = ClippingsService(language_code='es')
+            service = ClippingsService(language_code=self.config.get('language', 'es'))
             service.process_clippings_from_list(
                 clippings=export_list,
                 output_file=file_path,
-                root_notebook_name="Kindle Imports",
-                location=(0,0,0),
-                creator_name="KindleManager"
+                root_notebook_name=self.config.get('notebook_title', 'Kindle Imports'),
+                location=tuple(self.config.get('location', [0,0,0])),
+                creator_name=self.config.get('creator', 'System')
             )
             progress.close()
             QMessageBox.information(self, "Export Complete", f"Successfully exported {len(export_list)} notes.")

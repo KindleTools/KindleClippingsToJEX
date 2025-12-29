@@ -4,7 +4,7 @@ import argparse
 import logging
 from services.clippings_service import ClippingsService
 from utils.logging_config import setup_logging
-from utils.config_manager import load_config_from_file
+from utils.config_manager import get_config_manager
 
 # Setup Logger
 logger = setup_logging()
@@ -22,19 +22,20 @@ def parse_args():
 def main():
     logger.info("Application started via CLI.")
     
-    # Load config from file
-    file_config = load_config_from_file()
+    # Load config manager
+    config = get_config_manager()
     
     # Parse CLI args
     args = parse_args()
     
     # Determine effective configuration (CLI args > File Config > Defaults)
-    input_file = args.input or file_config.get('input_file', 'data/My Clippings.txt')
-    output_file = args.output or file_config.get('output_file', 'import_clippings')
-    language = args.lang or file_config.get('language', 'es')
-    notebook_title = args.notebook or file_config.get('notebook_title', 'Kindle Imports')
-    creator = args.creator or file_config.get('creator', 'System')
-    location = tuple(file_config.get('location', [0, 0, 0])) # Geo-location usually not a volatile arg
+    # Note: fallback strings here should match ConfigManager defaults for consistency
+    input_file = args.input or config.get('input_file') or 'data/My Clippings.txt'
+    output_file = args.output or config.get('output_file') or 'import_clippings'
+    language = args.lang or config.get('language') or 'es'
+    notebook_title = args.notebook or config.get('notebook_title') or 'Kindle Imports'
+    creator = args.creator or config.get('creator') or 'System'
+    location = tuple(config.get('location', [0, 0, 0])) # Geo-location
     
     logger.info(f"Input: {input_file}")
     logger.info(f"Output Target: {output_file}")

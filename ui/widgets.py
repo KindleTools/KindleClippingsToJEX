@@ -175,7 +175,11 @@ class ClippingsTableWidget(QTableWidget):
         
         for row, clip in enumerate(clippings):
             date_str = clip.date_time.strftime('%Y-%m-%d %H:%M') if clip.date_time else ""
-            self.setItem(row, 0, QTableWidgetItem(date_str))
+            date_item = QTableWidgetItem(date_str)
+            # Store full object for robust retrieval
+            date_item.setData(Qt.UserRole, clip)
+            self.setItem(row, 0, date_item)
+            
             self.setItem(row, 1, QTableWidgetItem(clip.book_title))
             self.setItem(row, 2, QTableWidgetItem(clip.author))
             
