@@ -1,80 +1,208 @@
-/* Global Styles */
+/* Modern Light Mode - Clean, Airy, Low Fatigue */
+
+/* 1. Global Window */
 QMainWindow { 
-    background-color: #f8f9fa; 
+    background-color: #F8F9FA; /* Smooth Gray-White (Bootstrap-ish) */
 }
 
-/* Typography */
+QWidget {
+    font-family: 'Segoe UI', 'Inter', sans-serif;
+    font-size: 15px; /* Matched 15px from Dark Mode */
+    color: #212529; /* Almost Black */
+}
+
+/* 2. Typography */
 QLabel#h1 { 
-    font-size: 22px; 
-    font-weight: bold; 
-    color: #2c3e50; 
-    font-family: 'Segoe UI', sans-serif;
+    font-size: 26px; 
+    font-weight: 700; 
+    color: #1a1a1a; 
+    margin-bottom: 6px;
 }
 
 QLabel#subtitle { 
-    font-size: 14px; 
-    color: #666; 
-    margin-top: 4px;
-    font-family: 'Segoe UI', sans-serif; 
+    font-size: 13px; 
+    color: #6C757D; /* Modern secondary text grey */
+    font-weight: 500;
 }
 
-/* Buttons */
+QLabel#statValue {
+    color: #1976D2; /* Strong Blue for numbers */
+    font-weight: bold;
+}
+
+/* 3. Buttons */
 QPushButton {
-    background-color: white;
-    border: 1px solid #dcdcdc;
+    background-color: #FFFFFF;
+    border: 1px solid #CED4DA;
     padding: 8px 16px;
-    border-radius: 4px;
-    color: #333;
-    font-weight: 500;
-    font-family: 'Segoe UI', sans-serif;
+    border-radius: 6px;
+    color: #495057;
+    font-weight: 600;
 }
 
 QPushButton:hover { 
-    background-color: #f0f0f0; 
-    border-color: #bbb; 
+    background-color: #F1F3F5; 
+    border-color: #ADB5BD;
+    color: #212529;
 }
 
+QPushButton:pressed {
+    background-color: #E9ECEF;
+}
+
+/* Primary Action Button */
 QPushButton#primaryBtn {
-    background-color: #007bff;
+    background-color: #1565C0; /* Same professional blue as Dark Mode */
     color: white;
-    border: 1px solid #0056b3;
+    border: 1px solid #0D47A1;
 }
 
 QPushButton#primaryBtn:hover { 
-    background-color: #0069d9; 
+    background-color: #1976D2; 
+    border-color: #1565C0;
 }
 
 QPushButton:disabled { 
-    background-color: #e9ecef; 
-    color: #adb5bd; 
-    border-color: #e9ecef; 
+    background-color: #E9ECEF; 
+    color: #ADB5BD; 
+    border-color: #DEE2E6; 
 }
 
-/* Inputs */
-QTextEdit { 
-    border: 1px solid #ddd; 
-    background: white; 
-    padding: 10px; 
-    border-radius: 4px; 
-    font-family: 'Segoe UI', sans-serif; 
-    font-size: 14px; 
-    line-height: 1.5;
+/* 4. Input Fields */
+QLineEdit, QTextEdit, QComboBox, QSpinBox, QDoubleSpinBox { 
+    border: 1px solid #CED4DA; 
+    border-radius: 6px; 
+    padding: 8px; 
+    background-color: #FFFFFF;
+    color: #212529;
+    selection-background-color: #E3F2FD; /* Very light blue selection */
+    selection-color: #1565C0;
 }
 
-/* Splitter */
+QLineEdit:focus, QTextEdit:focus {
+    border: 1px solid #4FA6FF; /* Bright blue focus */
+    outline: none;
+    background-color: #FFFFFF;
+}
+
+/* 5. Stats Panel */
+#statsPanel {
+    background-color: #FFFFFF;
+    border: 1px solid #E9ECEF;
+    border-radius: 8px;
+    /* Optional: Subtle modern shadow */
+    /* border-bottom: 2px solid #E9ECEF; */ 
+}
+
+/* 6. Table Widget */
+QTableWidget {
+    background-color: #FFFFFF;
+    alternate-background-color: #F8F9FA; /* Very subtle alternate row */
+    border: 1px solid #DEE2E6;
+    border-radius: 8px;
+    gridline-color: transparent; /* Cleaner look without gridlines in light mode too */
+    color: #212529;
+    selection-background-color: #E3F2FD; /* Modern light blue selection */
+    selection-color: #1565C0; /* Text turns blue when selected */
+}
+
+QTableWidget::item {
+    border-bottom: 1px solid #F1F3F5; /* Delicate separator */
+    padding: 6px;
+}
+
+QTableWidget::item:selected {
+    background-color: #E3F2FD;
+    color: #1565C0;
+}
+
+/* Header */
+QHeaderView::section {
+    background-color: #F8F9FA;
+    padding: 10px;
+    border: none;
+    border-bottom: 2px solid #DEE2E6;
+    font-weight: 600;
+    color: #6C757D;
+}
+
+QTableCornerButton::section {
+    background-color: #F8F9FA;
+    border: none;
+}
+
+/* 7. Scrollbars */
+QScrollBar:vertical {
+    border: none;
+    background: #F8F9FA;
+    width: 12px;
+    margin: 0px;
+}
+QScrollBar::handle:vertical {
+    background: #ADB5BD;
+    min-height: 20px;
+    border-radius: 6px;
+    border: 2px solid #F8F9FA;
+}
+QScrollBar::handle:vertical:hover {
+    background: #6C757D;
+}
+QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
+    height: 0px;
+}
+
+/* 8. Splitter */
 QSplitter::handle { 
-    background-color: #e0e0e0; 
+    background-color: #DEE2E6; 
     height: 1px; 
+    margin: 4px 0;
 }
 
-/* Dialogs */
+/* 9. Dialogs */
 QDialog { 
-    background-color: #f8f9fa; 
+    background-color: #FFFFFF; 
+    color: #212529;
 }
 
-QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox { 
-    padding: 5px; 
-    border: 1px solid #ccc; 
-    border-radius: 4px; 
-    background-color: white;
+QDialog QLabel {
+    color: #212529;
+}
+
+/* 10. Status Bar */
+QStatusBar {
+    background-color: #F8F9FA;
+    color: #6C757D;
+    border-top: 1px solid #DEE2E6;
+}
+
+/* 11. Editor Delegate (Match Light Theme) */
+QLineEdit {
+    background-color: #FFFFFF; 
+    color: #212529;
+    border: 2px solid #4FA6FF;
+    border-radius: 4px;
+    padding: 6px; 
+    font-size: 15px;
+}
+
+/* 12. Settings Widgets */
+QComboBox, QSpinBox, QDoubleSpinBox {
+    background-color: #FFFFFF;
+    border: 1px solid #CED4DA;
+    padding: 6px;
+    border-radius: 4px;
+    color: #212529;
+}
+
+QComboBox::drop-down {
+    border: none;
+    background: transparent;
+    width: 20px;
+}
+
+QComboBox QAbstractItemView {
+    background-color: #FFFFFF;
+    selection-background-color: #E3F2FD;
+    selection-color: #1565C0;
+    border: 1px solid #CED4DA;
 }

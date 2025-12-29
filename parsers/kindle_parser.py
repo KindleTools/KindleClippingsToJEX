@@ -118,16 +118,21 @@ class KindleClippingsParser:
                 loc_id = data['location'].split('-')[-1]
                 if loc_id in location_map:
                     parent_clipping = location_map[loc_id]
-                    raw_tags = re.split(r'[.,;]', data['content'])
+                    # Normalize tags: split by common separators including newlines
+                    raw_tags = re.split(r'[.,;\n\r]', data['content'])
                     for raw_tag in raw_tags:
                         tag_text = raw_tag.strip()
                         if not tag_text:
                             continue
-                        if not tag_text[0].isalpha(): # Cleanup bullet points if any
+                        
+                        # Cleanup bullet points or leading non-alnum chars if simple bullet
+                        if not tag_text[0].isalnum(): 
                              tag_text = tag_text[1:].strip()
                         
                         if tag_text:
-                            parent_clipping.tags.append(tag_text)
+                            # Avoid duplicates within the same note
+                            if tag_text not in parent_clipping.tags:
+                                parent_clipping.tags.append(tag_text)
                 else:
                     logger.debug(f"Orphaned note found at location {loc_id}, skipping.")
 

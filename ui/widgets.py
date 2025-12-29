@@ -9,6 +9,8 @@ class EmptyStateWidget(QWidget):
     Widget displayed when no clippings are loaded.
     Shows a welcoming icon and instruction to load a file.
     """
+    clicked = pyqtSignal()
+
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
@@ -39,6 +41,20 @@ class EmptyStateWidget(QWidget):
         layout.addWidget(self.icon_label)
         layout.addWidget(self.msg_label)
         layout.addWidget(self.sub_label)
+        
+        # Make it look clickable
+        self.setCursor(Qt.PointingHandCursor)
+
+    def mousePressEvent(self, event):
+        if event.button() == Qt.LeftButton:
+            self.clicked.emit()
+        super().mousePressEvent(event)
+
+    def set_kindle_mode(self, path):
+        """Updates the UI to show a detected Kindle."""
+        self.msg_label.setText("Kindle Detected!")
+        self.sub_label.setText(f"Found 'My Clippings.txt' at:\n{path}\n\nClick anywhere to load it.")
+
 
 class SearchBar(QLineEdit):
     """
@@ -47,20 +63,37 @@ class SearchBar(QLineEdit):
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setPlaceholderText("🔍 Search your notes...")
-        self.setStyleSheet("""
-            QLineEdit {
-                border: 1px solid #ddd;
-                border-radius: 4px;
-                padding: 6px 10px;
-                font-size: 14px;
-                background-color: white;
-            }
-            QLineEdit:focus {
-                border-color: #007bff;
-            }
-        """)
+        # Inline styles removed to clearer global QSS usage
 
-class ContentDelegate(QStyledItemDelegate):
+
+class CustomEditorDelegate(QStyledItemDelegate):
+    """
+    Base delegate to customize the edition widget (QLineEdit/QTextEdit).
+    Provides better spacing, font size, and visual comfort.
+    """
+    def createEditor(self, parent, option, index):
+        editor = super().createEditor(parent, option, index)
+        if isinstance(editor, QLineEdit):
+            # Enforce some padding and minimum height for comfort
+            editor.setStyleSheet("""
+                QLineEdit {
+                    padding: 6px;
+                    margin: 2px;
+                    border: 1px solid #339af0;
+                    border-radius: 4px;
+                    background-color: #141517; 
+                    color: white;
+                    font-size: 15px;
+                }
+            """)
+        return editor
+
+    def updateEditorGeometry(self, editor, option, index):
+        # Allow the editor to be slightly larger than the cell if needed, or just fill it properly
+        rect = option.rect
+        editor.setGeometry(rect)
+
+class ContentDelegate(CustomEditorDelegate):
     """
     Delegate for the Content column (Index 3).
     - When viewing: Displays truncated text "..."
@@ -116,8 +149,15 @@ class ClippingsTableWidget(QTableWidget):
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
         self.itemSelectionChanged.connect(self._on_selection_change)
         
-        # Apply delegate to 'Content' column
+        # Apply delegates
+        # Content (Col 3) gets special handling
         self.setItemDelegateForColumn(3, ContentDelegate(self))
+        
+        # Book(1), Author(2), Tags(5) get the styled editor
+        styled_delegate = CustomEditorDelegate(self)
+        self.setItemDelegateForColumn(1, styled_delegate)
+        self.setItemDelegateForColumn(2, styled_delegate)
+        self.setItemDelegateForColumn(5, styled_delegate)
         
         self.setContextMenuPolicy(Qt.CustomContextMenu)
         self.customContextMenuRequested.connect(self.show_context_menu)
@@ -159,7 +199,47 @@ class ClippingsTableWidget(QTableWidget):
         if self._is_updating: 
             return
             
-        if item.column() == 3:
+        col = item.column()
+        
+        # Metadata Columns (Book=1, Author=2)
+        if col in [1, 2]:
+            old_val = item.data(Qt.UserRole)
+            new_val = item.text().strip()
+            
+            # If changed and valid
+            if old_val and new_val and old_val != new_val:
+                from PyQt5.QtWidgets import QMessageBox
+                count = 0
+                # Check how many others match
+                for r in range(self.rowCount()):
+                    if r == item.row(): continue
+                    other_item = self.item(r, col)
+                    if other_item and other_item.data(Qt.UserRole) == old_val:
+                        count += 1
+                
+                if count > 0:
+                    field = "Book Title" if col == 1 else "Author"
+                    reply = QMessageBox.question(
+                        self, 
+                        f"Bulk Update {field}",
+                        f"You changed '{old_val}' to '{new_val}'.\n\nDo you want to update this for the other {count} notes?",
+                        QMessageBox.Yes | QMessageBox.No
+                    )
+                    
+                    if reply == QMessageBox.Yes:
+                        self._is_updating = True # Block signals
+                        for r in range(self.rowCount()):
+                            target_item = self.item(r, col)
+                            if target_item and target_item.data(Qt.UserRole) == old_val:
+                                target_item.setText(new_val)
+                                target_item.setData(Qt.UserRole, new_val)
+                        self._is_updating = False
+
+            # Update current item's UserRole to accept the change
+            item.setData(Qt.UserRole, new_val)
+
+        # Content Column (3)
+        if col == 3:
             if self.currentRow() == item.row():
                 full_text = item.data(Qt.UserRole)
                 self.row_selected.emit(full_text)
@@ -190,8 +270,14 @@ class ClippingsTableWidget(QTableWidget):
             date_item.setData(Qt.UserRole, clip)
             self.setItem(row, 0, date_item)
             
-            self.setItem(row, 1, QTableWidgetItem(clip.book_title))
-            self.setItem(row, 2, QTableWidgetItem(clip.author))
+            # Store plain text in UserRole for Bulk Edit detection
+            book_item = QTableWidgetItem(clip.book_title)
+            book_item.setData(Qt.UserRole, clip.book_title)
+            self.setItem(row, 1, book_item)
+            
+            author_item = QTableWidgetItem(clip.author)
+            author_item.setData(Qt.UserRole, clip.author)
+            self.setItem(row, 2, author_item)
             
             # Content: full in UserRole, truncated in Text
             preview = clip.content[:100].replace('\n', ' ') + "..." if len(clip.content) > 100 else clip.content
@@ -313,15 +399,34 @@ class ClippingsTableWidget(QTableWidget):
             original_clip = item_0.data(Qt.UserRole)
             if not original_clip: continue
             
-            # Retrieve potentially edited content from Content column UserRole
-            item_content = self.item(r, 3)
-            edited_content = item_content.data(Qt.UserRole) if item_content else None
+            # Retrieve potentially edited content
+            # Column 1: Book Title
+            item_book = self.item(r, 1)
+            new_book = item_book.text().strip() if item_book else original_clip.book_title
             
-            if edited_content is not None:
-                # Create final object with edited content
-                final_clip = replace(original_clip, content=edited_content)
-                clippings.append(final_clip)
-            else:
-                clippings.append(original_clip)
+            # Column 2: Author
+            item_author = self.item(r, 2)
+            new_author = item_author.text().strip() if item_author else original_clip.author
+
+            # Column 3: Content (UserRole has full text)
+            item_content = self.item(r, 3)
+            new_content = item_content.data(Qt.UserRole)
+            if not new_content:
+                new_content = item_content.text() if item_content else original_clip.content
+            
+            # Column 5: Tags
+            item_tags = self.item(r, 5)
+            new_tags_str = item_tags.text().strip() if item_tags else ""
+            # Parse tags back to set
+            new_tags = set(t.strip() for t in new_tags_str.split(',') if t.strip())
+
+            # Create final object with ALL edited fields
+            final_clip = replace(original_clip, 
+                               book_title=new_book,
+                               author=new_author,
+                               content=new_content,
+                               tags=new_tags)
+            
+            clippings.append(final_clip)
                 
         return clippings

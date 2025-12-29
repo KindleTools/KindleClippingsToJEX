@@ -2,7 +2,7 @@
 import os
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                             QPushButton, QLabel, QFileDialog, QSplitter, 
-                            QTextEdit, QMessageBox, QStackedWidget, QAction, QProgressDialog)
+                            QTextEdit, QMessageBox, QStackedWidget, QAction, QProgressDialog, QFrame)
 from PyQt5.QtCore import Qt, QTimer
 
 from domain.models import Clipping
@@ -43,6 +43,12 @@ class MainWindow(QMainWindow):
 
         self.setup_ui()
         self.apply_styles()
+
+        # Enable Drag & Drop
+        self.setAcceptDrops(True)
+        
+        # Connect Empty State Click
+        self.empty_page.clicked.connect(self.load_file_dialog)
         
         # Defer auto-load check to allow UI to show up first
         QTimer.singleShot(100, self.check_autoload)
@@ -71,13 +77,17 @@ class MainWindow(QMainWindow):
         self.data_layout.setContentsMargins(0, 0, 0, 0)
         self.data_layout.setSpacing(10)
         
+        # --- Stats Panel ---
+        self.stats_panel = self._create_stats_panel()
+        self.data_layout.addWidget(self.stats_panel)
+        
         # --- Search Bar Area ---
         search_layout = QHBoxLayout()
         self.search_bar = SearchBar()
         self.search_bar.textChanged.connect(self.on_search)
         search_layout.addWidget(self.search_bar)
         self.data_layout.addLayout(search_layout)
-        
+
         # --- Splitter (Table + Editor) ---
         self.splitter = QSplitter(Qt.Vertical)
         
@@ -101,6 +111,66 @@ class MainWindow(QMainWindow):
         self.stack.addWidget(self.data_page)
         
         self.main_layout.addWidget(self.stack)
+
+    def _create_stats_panel(self):
+        """Creates the horizontal stats bar."""
+        panel = QFrame()
+        panel.setObjectName("statsPanel")
+        
+        layout = QHBoxLayout(panel)
+        layout.setContentsMargins(20, 15, 20, 15)
+        
+        # Helper to create standardized labels
+        def create_stat_label(default_text):
+            lbl = QLabel(default_text)
+            lbl.setObjectName("statValue")
+            lbl.setAlignment(Qt.AlignCenter)
+            return lbl
+
+        self.lbl_stat_total = create_stat_label("0\nHighlights")
+        self.lbl_stat_books = create_stat_label("0\nBooks")
+        self.lbl_stat_authors = create_stat_label("0\nAuthors")
+        self.lbl_stat_tags = create_stat_label("0\nTags")
+        self.lbl_stat_time = create_stat_label("0\nDays")
+        
+        for lbl in [self.lbl_stat_total, self.lbl_stat_books, self.lbl_stat_authors, self.lbl_stat_tags, self.lbl_stat_time]:
+            layout.addWidget(lbl)
+            
+        return panel
+
+    def update_insight_stats(self, clippings):
+        """Calculates and updates the stats panel."""
+        total = len(clippings)
+        unique_books = len(set(c.book_title for c in clippings))
+        unique_authors = len(set(c.author for c in clippings))
+        
+        # Count unique non-empty tags
+        all_tags = set()
+        for c in clippings:
+            for t in c.tags:
+                clean = t.strip()
+                if clean:
+                    all_tags.add(clean)
+        unique_tags = len(all_tags)
+        
+        # Calculate Time Span
+        days_span = 0
+        if clippings:
+            dates = [c.date_time for c in clippings if c.date_time]
+            if dates:
+                min_date = min(dates)
+                max_date = max(dates)
+                days_span = (max_date - min_date).days
+
+        # Update labels (Structure only, styling via QSS)
+        def fmt(val, label):
+             return f"<html><head/><body><p align='center'><span style='font-size:18px; font-weight:600;'>{val}</span><br/><span style='font-size:12px; opacity:0.75;'>{label}</span></p></body></html>"
+
+        self.lbl_stat_total.setText(fmt(total, "Highlights"))
+        self.lbl_stat_books.setText(fmt(unique_books, "Books"))
+        self.lbl_stat_authors.setText(fmt(unique_authors, "Authors"))
+        self.lbl_stat_tags.setText(fmt(unique_tags, "Tags"))
+        self.lbl_stat_time.setText(fmt(days_span, "Days Span"))
 
     def _setup_header(self):
         """Constructs the top header with title and action buttons."""
@@ -131,6 +201,12 @@ class MainWindow(QMainWindow):
         self.btn_export.setEnabled(False)
         self.btn_export.setObjectName("primaryBtn")
         
+        self.btn_theme = QPushButton("🌗")
+        self.btn_theme.setFixedSize(40, 36)
+        self.btn_theme.setToolTip("Toggle Dark Mode")
+        self.btn_theme.clicked.connect(self.toggle_theme)
+        self.btn_theme.setCursor(Qt.PointingHandCursor)
+
         self.btn_settings = QPushButton("⚙️")
         self.btn_settings.setFixedSize(40, 36) # Squaresh
         self.btn_settings.setToolTip("Settings")
@@ -139,9 +215,17 @@ class MainWindow(QMainWindow):
         
         header.addWidget(self.btn_load)
         header.addWidget(self.btn_export)
+        header.addWidget(self.btn_theme)
         header.addWidget(self.btn_settings)
         
         self.main_layout.addLayout(header)
+
+    def toggle_theme(self):
+        """Switches between light and dark mode."""
+        current = self.config.get("theme", "light") # Default to light
+        new_theme = "dark" if current == "light" else "light"
+        self.config.set("theme", new_theme)
+        self.apply_styles()
 
     def open_settings(self):
         """Opens the Settings Dialog."""
@@ -157,7 +241,7 @@ class MainWindow(QMainWindow):
                      self.load_file(self.config.get('input_file'))
 
     def check_autoload(self):
-        """Checks for configured input file."""
+        """Checks for configured input file or connected Kindle."""
         input_file = self.config.get('input_file', "")
         if input_file and os.path.exists(input_file):
             self.load_file(input_file)
@@ -167,6 +251,30 @@ class MainWindow(QMainWindow):
         default_path = os.path.join("data", "My Clippings.txt")
         if os.path.exists(default_path):
             self.load_file(default_path)
+            return
+
+        # Try to detect Kindle
+        kindle_path = self.detect_kindle()
+        if kindle_path:
+            self.empty_page.set_kindle_mode(kindle_path)
+            # Override local function to just load this file if clicked
+            self.empty_page.clicked.disconnect()
+            self.empty_page.clicked.connect(lambda: self.load_file(kindle_path))
+
+    def detect_kindle(self):
+        """Scans connected drives for Kindle's My Clippings.txt."""
+        import string
+        drives = [f"{d}:\\" for d in string.ascii_uppercase if d not in "ABC"]
+        for drive in drives:
+            # Check widely common paths
+            candidates = [
+                os.path.join(drive, "documents", "My Clippings.txt"),
+                os.path.join(drive, "Kindle", "documents", "My Clippings.txt") 
+            ]
+            for c in candidates:
+                if os.path.exists(c):
+                    return c
+        return None
 
     def load_file_dialog(self):
         """Opens a file dialog for the user to select the clippings file."""
@@ -200,6 +308,7 @@ class MainWindow(QMainWindow):
         self.stack.setCurrentWidget(self.data_page)
         self.btn_export.setEnabled(True)
         self.update_stats_label(len(clippings))
+        self.update_insight_stats(clippings)
 
     def on_load_error(self, error_msg):
         self.progress.close()
@@ -285,18 +394,41 @@ class MainWindow(QMainWindow):
 
     def on_export_finished(self, count):
         self.progress.close()
-        QMessageBox.information(self, "Export Complete", f"Successfully exported {count} notes.")
+        self.statusBar().showMessage(f"Successfully exported {count} notes.", 5000)
+        # Optional: Flash the export button or something similar if desired, 
+        # but status bar is standard for "zen" apps.
 
     def on_export_error(self, msg):
         self.progress.close()
         QMessageBox.critical(self, "Error", msg)
 
+    def dragEnterEvent(self, event):
+        """Handle file drag enter events."""
+        if event.mimeData().hasUrls():
+            # Accept if at least one file is a text file
+            for url in event.mimeData().urls():
+                if url.toLocalFile().lower().endswith('.txt'):
+                    event.acceptProposedAction()
+                    return
+        event.ignore()
+
+    def dropEvent(self, event):
+        """Handle file drop events."""
+        for url in event.mimeData().urls():
+            file_path = url.toLocalFile()
+            if os.path.exists(file_path) and file_path.lower().endswith('.txt'):
+                self.load_file(file_path)
+                break
+
     def apply_styles(self):
-        """Applies global CSS styles from resources/styles.qss."""
+        """Applies global CSS styles based on current theme."""
         import os
+        theme = self.config.get("theme", "light")
+        filename = "styles_dark.qss" if theme == "dark" else "styles.qss"
+        
         # Relative path to resources
         current_dir = os.path.dirname(os.path.abspath(__file__))
-        style_path = os.path.join(current_dir, '..', 'resources', 'styles.qss')
+        style_path = os.path.join(current_dir, '..', 'resources', filename)
         
         if os.path.exists(style_path):
             with open(style_path, 'r', encoding='utf-8') as f:

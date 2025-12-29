@@ -83,11 +83,6 @@ class SettingsDialog(QDialog):
         self.buttons.accepted.connect(self.save_settings)
         self.buttons.rejected.connect(self.reject)
         layout.addWidget(self.buttons)
-        
-        self.setStyleSheet("""
-            QDialog { background-color: #f8f9fa; }
-            QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox { padding: 5px; border: 1px solid #ccc; border-radius: 4px; }
-        """)
 
     def load_values(self):
         """Populate fields with current config."""
