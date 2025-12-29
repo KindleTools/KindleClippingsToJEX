@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "KindleClippingsToJEX"
-version = "0.1.0"
+version = "0.2.0"
 description = "Convert Kindle clippings to Joplin JEX format"
 authors = [
     {name = "Andrés Jiménez", email = "andresjimenezrios@gmail.com"},
@@ -17,7 +17,7 @@ requires-python = ">=3.8"
 
 [project.scripts]
 kindle-to-jex = "cli:main"
-kindle-to-jex-gui = "gui:main"
+kindle-to-jex-gui = "main:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
