@@ -13,6 +13,15 @@ class SettingsDialog(QDialog):
         super().__init__(parent)
         self.setWindowTitle("Settings")
         self.setFixedWidth(400)
+        
+        # Set Dialog Icon
+        from PyQt5.QtGui import QIcon
+        import os
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        icon_path = os.path.join(current_dir, '..', 'resources', 'icon.png')
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+
         self.config = get_config_manager()
         
         self.setup_ui()
@@ -25,7 +34,7 @@ class SettingsDialog(QDialog):
         
         # Language Selection
         self.combo_lang = QComboBox()
-        self.combo_lang.addItems(["es", "en", "fr", "de", "it", "pt"])
+        self.combo_lang.addItems(["auto", "es", "en", "fr", "de", "it", "pt"])
         self.combo_lang.setToolTip("Language of your Kindle 'My Clippings.txt' file.")
         
         # Default Creator

@@ -14,8 +14,18 @@ class EmptyStateWidget(QWidget):
         layout = QVBoxLayout(self)
         layout.setAlignment(Qt.AlignCenter)
         
-        self.icon_label = QLabel("📚")
-        self.icon_label.setStyleSheet("font-size: 64px; margin-bottom: 20px;")
+        self.icon_label = QLabel()
+        import os
+        from PyQt5.QtGui import QPixmap
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        icon_path = os.path.join(current_dir, '..', 'resources', 'icon.png')
+        if os.path.exists(icon_path):
+             pixmap = QPixmap(icon_path).scaled(84, 84, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+             self.icon_label.setPixmap(pixmap)
+        else:
+             self.icon_label.setText("📚")
+             self.icon_label.setStyleSheet("font-size: 64px; margin-bottom: 20px;")
+             
         self.icon_label.setAlignment(Qt.AlignCenter)
         
         self.msg_label = QLabel("Your Kindle library is waiting")
@@ -287,3 +297,31 @@ class ClippingsTableWidget(QTableWidget):
             if not self.isRowHidden(r):
                 visible += 1
         self.rows_filtered.emit(visible)
+
+    def get_clippings_from_rows(self, row_indices):
+        """
+        Extracts Clipping objects for the specified rows.
+        Applies any pending edits found in the 'Content' column.
+        """
+        from dataclasses import replace
+        clippings = []
+        for r in row_indices:
+            # Retrieve full object from 1st column UserRole
+            item_0 = self.item(r, 0)
+            if not item_0: continue
+            
+            original_clip = item_0.data(Qt.UserRole)
+            if not original_clip: continue
+            
+            # Retrieve potentially edited content from Content column UserRole
+            item_content = self.item(r, 3)
+            edited_content = item_content.data(Qt.UserRole) if item_content else None
+            
+            if edited_content is not None:
+                # Create final object with edited content
+                final_clip = replace(original_clip, content=edited_content)
+                clippings.append(final_clip)
+            else:
+                clippings.append(original_clip)
+                
+        return clippings

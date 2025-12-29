@@ -32,7 +32,7 @@ def main():
     # Note: fallback strings here should match ConfigManager defaults for consistency
     input_file = args.input or config.get('input_file') or 'data/My Clippings.txt'
     output_file = args.output or config.get('output_file') or 'import_clippings'
-    language = args.lang or config.get('language') or 'es'
+    language = args.lang or config.get('language') or 'auto'
     notebook_title = args.notebook or config.get('notebook_title') or 'Kindle Imports'
     creator = args.creator or config.get('creator') or 'System'
     location = tuple(config.get('location', [0, 0, 0])) # Geo-location

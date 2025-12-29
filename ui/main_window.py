@@ -13,6 +13,8 @@ from datetime import datetime
 
 from ui.settings_dialog import SettingsDialog
 from utils.config_manager import get_config_manager
+from ui.threads import LoadFileThread, ExportThread
+from PyQt5.QtCore import QFile, QTextStream
 
 class MainWindow(QMainWindow):
     """
@@ -31,6 +33,14 @@ class MainWindow(QMainWindow):
         
         self.clippings = []
         
+        # Set Window Icon
+        from PyQt5.QtGui import QIcon
+        import os
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        icon_path = os.path.join(current_dir, '..', 'resources', 'icon.png')
+        if os.path.exists(icon_path):
+            self.setWindowIcon(QIcon(icon_path))
+
         self.setup_ui()
         self.apply_styles()
         
@@ -135,11 +145,16 @@ class MainWindow(QMainWindow):
 
     def open_settings(self):
         """Opens the Settings Dialog."""
+        old_lang = self.config.get("language", "auto")
         dlg = SettingsDialog(self)
         if dlg.exec_():
-            # If settings changed (like language), we might want to refresh if file is loaded
-            # For now, just logging or status update could be fine
-            pass
+            new_lang = self.config.get("language", "auto")
+            if old_lang != new_lang and self.clippings:
+                 reply = QMessageBox.question(self, "Language Changed", 
+                                            "You changed the language setting. Do you want to reload the current file?",
+                                            QMessageBox.Yes | QMessageBox.No)
+                 if reply == QMessageBox.Yes:
+                     self.load_file(self.config.get('input_file'))
 
     def check_autoload(self):
         """Checks for configured input file."""
@@ -163,32 +178,32 @@ class MainWindow(QMainWindow):
             self.load_file(file_path)
 
     def load_file(self, file_path):
-        """Parses the file and updates the UI."""
-        progress = QProgressDialog("Loading highlights...", None, 0, 0, self)
-        progress.setWindowModality(Qt.WindowModal)
-        progress.setMinimumDuration(0)
-        progress.show()
+        """Parses the file and updates the UI using a background thread."""
+        self.progress = QProgressDialog("Loading highlights...", None, 0, 0, self)
+        self.progress.setWindowModality(Qt.WindowModal)
+        self.progress.setMinimumDuration(0)
+        self.progress.setCancelButton(None)
+        self.progress.show()
         
-        # Force UI update
-        from PyQt5.QtWidgets import QApplication
-        QApplication.processEvents()
+        self.config.set('input_file', file_path)
+        lang = self.config.get('language', 'auto')
+        
+        self.loader_thread = LoadFileThread(file_path, lang)
+        self.loader_thread.finished.connect(self.on_load_finished)
+        self.loader_thread.error.connect(self.on_load_error)
+        self.loader_thread.start()
 
-        try:
-            # Update config
-            self.config.set('input_file', file_path)
-            
-            lang = self.config.get('language', 'es')
-            parser = KindleClippingsParser(language_code=lang)
-            self.clippings = parser.parse_file(file_path)
-            
-            self.table.populate(self.clippings)
-            self.stack.setCurrentWidget(self.data_page)
-            self.btn_export.setEnabled(True)
-            
-        except Exception as e:
-            QMessageBox.critical(self, "Error", f"Error reading file:\n{str(e)}")
-        finally:
-            progress.close()
+    def on_load_finished(self, clippings):
+        self.progress.close()
+        self.clippings = clippings
+        self.table.populate(self.clippings)
+        self.stack.setCurrentWidget(self.data_page)
+        self.btn_export.setEnabled(True)
+        self.update_stats_label(len(clippings))
+
+    def on_load_error(self, error_msg):
+        self.progress.close()
+        QMessageBox.critical(self, "Error", f"Error reading file:\n{error_msg}")
 
     def update_stats_label(self, visible_count):
         """Updates the subtitle label with the count of visible/total items."""
@@ -228,13 +243,11 @@ class MainWindow(QMainWindow):
     def perform_export(self, rows_indices, title="Export"):
         """
         Executes the export logic for a given list of row indices.
-        Generates the list of Clipping enumerations and calls the service.
         """
         if not rows_indices:
             return
 
         default_output = self.config.get("output_file", "import_clippings")
-        # Ensure extension if missing from config
         if not default_output.endswith('.jex'):
              default_output += ".jex"
 
@@ -242,69 +255,51 @@ class MainWindow(QMainWindow):
         if not file_path:
             return
             
-        # Loading indicator for export too
-        progress = QProgressDialog("Exporting...", None, 0, 0, self)
-        progress.setWindowModality(Qt.WindowModal)
-        progress.setMinimumDuration(0)
-        progress.show()
-        
-        from PyQt5.QtWidgets import QApplication
-        QApplication.processEvents()
-
+        # Prepare data in main thread (fast) to avoid thread safety issues with UI widgets
         try:
-            from dataclasses import replace
-            export_list = []
-            for r in rows_indices:
-                # Retrieve full object from 1st column UserRole
-                item_0 = self.table.item(r, 0)
-                original_clip = item_0.data(Qt.UserRole)
-                
-                if not original_clip:
-                    continue
-                
-                # Retrieve potentially edited content from Content column UserRole
-                edited_content = self.table.item(r, 3).data(Qt.UserRole)
-                
-                # Create final object with edited content (preserving everything else)
-                final_clip = replace(original_clip, content=edited_content)
-                export_list.append(final_clip)
-
-            service = ClippingsService(language_code=self.config.get('language', 'es'))
-            service.process_clippings_from_list(
-                clippings=export_list,
-                output_file=file_path,
-                root_notebook_name=self.config.get('notebook_title', 'Kindle Imports'),
-                location=tuple(self.config.get('location', [0,0,0])),
-                creator_name=self.config.get('creator', 'System')
-            )
-            progress.close()
-            QMessageBox.information(self, "Export Complete", f"Successfully exported {len(export_list)} notes.")
+            export_list = self.table.get_clippings_from_rows(rows_indices)
         except Exception as e:
-            progress.close()
-            QMessageBox.critical(self, "Error", str(e))
+            QMessageBox.critical(self, "Error", f"Failed to prepare data: {e}")
+            return
+
+        # Start Export Thread
+        self.progress = QProgressDialog("Exporting...", None, 0, 0, self)
+        self.progress.setWindowModality(Qt.WindowModal)
+        self.progress.setMinimumDuration(0)
+        self.progress.setCancelButton(None)
+        self.progress.show()
+
+        service = ClippingsService(language_code=self.config.get('language', 'auto'))
+        
+        self.export_thread = ExportThread(
+            service=service,
+            clippings=export_list,
+            output_file=file_path,
+            root_notebook=self.config.get('notebook_title', 'Kindle Imports'),
+            location=tuple(self.config.get('location', [0,0,0])),
+            creator=self.config.get('creator', 'System')
+        )
+        self.export_thread.finished.connect(self.on_export_finished)
+        self.export_thread.error.connect(self.on_export_error)
+        self.export_thread.start()
+
+    def on_export_finished(self, count):
+        self.progress.close()
+        QMessageBox.information(self, "Export Complete", f"Successfully exported {count} notes.")
+
+    def on_export_error(self, msg):
+        self.progress.close()
+        QMessageBox.critical(self, "Error", msg)
 
     def apply_styles(self):
-        """Applies global CSS styles to the window components."""
-        self.setStyleSheet("""
-            QMainWindow { background-color: #f8f9fa; }
-            QLabel#h1 { font-size: 22px; font-weight: bold; color: #2c3e50; }
-            QLabel#subtitle { font-size: 14px; color: #666; margin-top: 4px; }
-            QPushButton {
-                background-color: white;
-                border: 1px solid #dcdcdc;
-                padding: 8px 16px;
-                border-radius: 4px;
-                color: #333;
-                font-weight: 500;
-            }
-            QPushButton:hover { background-color: #f0f0f0; border-color: #bbb; }
-            QPushButton#primaryBtn {
-                background-color: #007bff;
-                color: white;
-                border: 1px solid #0056b3;
-            }
-            QPushButton#primaryBtn:hover { background-color: #0069d9; }
-            QPushButton:disabled { background-color: #e9ecef; color: #adb5bd; border-color: #e9ecef; }
-            QTextEdit { border: 1px solid #ddd; background: white; padding: 10px; border-radius: 4px; }
-            QSplitter::handle { background-color: #e0e0e0; height: 1px; }
-        """)
+        """Applies global CSS styles from resources/styles.qss."""
+        import os
+        # Relative path to resources
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        style_path = os.path.join(current_dir, '..', 'resources', 'styles.qss')
+        
+        if os.path.exists(style_path):
+            with open(style_path, 'r', encoding='utf-8') as f:
+                self.setStyleSheet(f.read())
+        else:
+             print(f"Warning: Stylesheet not found at {style_path}")

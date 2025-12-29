@@ -1,0 +1,80 @@
+/* Global Styles */
+QMainWindow { 
+    background-color: #f8f9fa; 
+}
+
+/* Typography */
+QLabel#h1 { 
+    font-size: 22px; 
+    font-weight: bold; 
+    color: #2c3e50; 
+    font-family: 'Segoe UI', sans-serif;
+}
+
+QLabel#subtitle { 
+    font-size: 14px; 
+    color: #666; 
+    margin-top: 4px;
+    font-family: 'Segoe UI', sans-serif; 
+}
+
+/* Buttons */
+QPushButton {
+    background-color: white;
+    border: 1px solid #dcdcdc;
+    padding: 8px 16px;
+    border-radius: 4px;
+    color: #333;
+    font-weight: 500;
+    font-family: 'Segoe UI', sans-serif;
+}
+
+QPushButton:hover { 
+    background-color: #f0f0f0; 
+    border-color: #bbb; 
+}
+
+QPushButton#primaryBtn {
+    background-color: #007bff;
+    color: white;
+    border: 1px solid #0056b3;
+}
+
+QPushButton#primaryBtn:hover { 
+    background-color: #0069d9; 
+}
+
+QPushButton:disabled { 
+    background-color: #e9ecef; 
+    color: #adb5bd; 
+    border-color: #e9ecef; 
+}
+
+/* Inputs */
+QTextEdit { 
+    border: 1px solid #ddd; 
+    background: white; 
+    padding: 10px; 
+    border-radius: 4px; 
+    font-family: 'Segoe UI', sans-serif; 
+    font-size: 14px; 
+    line-height: 1.5;
+}
+
+/* Splitter */
+QSplitter::handle { 
+    background-color: #e0e0e0; 
+    height: 1px; 
+}
+
+/* Dialogs */
+QDialog { 
+    background-color: #f8f9fa; 
+}
+
+QLineEdit, QComboBox, QSpinBox, QDoubleSpinBox { 
+    padding: 5px; 
+    border: 1px solid #ccc; 
+    border-radius: 4px; 
+    background-color: white;
+}

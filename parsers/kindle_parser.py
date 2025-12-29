@@ -20,28 +20,51 @@ class KindleClippingsParser:
         current_dir = os.path.dirname(os.path.abspath(__file__))
         lang_file = os.path.join(current_dir, '..', 'resources', 'languages.json')
         
-        # Default fallback patterns (Spanish) if file load fails
-        self.patterns = {
+        # Default fallback patterns (Spanish)
+        self.default_patterns = {
             "highlight": "subrayado|Subrayado",
             "note": "nota|Nota",
             "page": "página",
             "added": "Añadid. el",
             "location": r"posición|Pos\."
         }
+        self.patterns = self.default_patterns
 
+        self.available_languages = {}
         if os.path.exists(lang_file):
             try:
                 with open(lang_file, 'r', encoding='utf-8') as f:
-                    langs = json.load(f)
-                    if self.language_code in langs:
-                        self.patterns = langs[self.language_code]
-                        logger.info(f"Loaded patterns for language: {self.language_code}")
-                    else:
-                        logger.warning(f"Language '{self.language_code}' not found in {lang_file}. Using defaults.")
+                    self.available_languages = json.load(f)
             except (OSError, json.JSONDecodeError) as e:
                 logger.error(f"Error loading languages.json: {e}")
         else:
-             logger.warning(f"languages.json not found at {os.path.abspath(lang_file)}. Using internal defaults.")
+             logger.warning(f"languages.json not found at {os.path.abspath(lang_file)}.")
+
+        if self.language_code != 'auto':
+            if self.language_code in self.available_languages:
+                self.patterns = self.available_languages[self.language_code]
+                logger.info(f"Loaded patterns for language: {self.language_code}")
+            else:
+                logger.warning(f"Language '{self.language_code}' not found. Using defaults.")
+
+    def _detect_language(self, content: str) -> str:
+        """Attempts to detect language by checking patterns against file content."""
+        logger.info("Attempting auto-detection of language...")
+        sample = content[:5000] # Check first 5000 chars
+        
+        for lang_code, patterns in self.available_languages.items():
+            # Check for 'highlight' keyword presence
+            # We use the raw string from json which might contain regex like "subrayado|Subrayado"
+            # simpler check: just seeing if the regex finds a match in the sample
+            try:
+                if re.search(patterns['added'], sample) or re.search(patterns['highlight'], sample):
+                    logger.info(f"Language detected: {lang_code}")
+                    return lang_code
+            except re.error:
+                continue
+                
+        logger.warning("Auto-detection failed. Falling back to 'es'.")
+        return 'es'
 
     def parse_file(self, file_path: str, encoding: str = "utf-8-sig") -> List[Clipping]:
         logger.info(f"Parsing file: {file_path}")
@@ -56,6 +79,15 @@ class KindleClippingsParser:
             return []
         
         raw_clippings = content.split(self.separator)
+        
+        # Auto-detect language if requested
+        if self.language_code == 'auto':
+            detected_lang = self._detect_language(content)
+            if detected_lang in self.available_languages:
+                self.patterns = self.available_languages[detected_lang]
+            else:
+                 self.patterns = self.default_patterns # Fallback
+
         location_map: Dict[str, Clipping] = {} 
         parsed_clippings: List[Clipping] = []
 
