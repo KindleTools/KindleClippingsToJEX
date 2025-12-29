@@ -6,7 +6,7 @@
         0
     ],
     "notebook_title": "KINDLE_IMPORTS",
-    "input_file": "files/txt/My Clippings.txt",
+    "input_file": "data/My Clippings.txt",
     "output_file": "import_clippings",
     "language": "en"
 }

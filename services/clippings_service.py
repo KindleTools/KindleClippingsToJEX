@@ -1,8 +1,8 @@
 from typing import Dict, List, Tuple
 import logging
-from src.domain.models import Clipping
-from src.parsers.kindle_parser import KindleClippingsParser
-from src.exporters.joplin_exporter import JexExportService, JoplinEntityBuilder
+from domain.models import Clipping
+from parsers.kindle_parser import KindleClippingsParser
+from exporters.joplin_exporter import JexExportService, JoplinEntityBuilder
 
 logger = logging.getLogger("KindleToJex.Service")
 

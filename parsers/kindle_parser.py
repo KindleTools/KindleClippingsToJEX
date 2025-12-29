@@ -4,7 +4,7 @@ import json
 import os
 import logging
 from typing import List, Dict, Optional
-from src.domain.models import Clipping
+from domain.models import Clipping
 
 logger = logging.getLogger("KindleToJex.Parser")
 
@@ -16,7 +16,9 @@ class KindleClippingsParser:
 
     def _load_language_patterns(self):
         """Loads regex patterns from languages.json based on configured language."""
-        lang_file = 'languages.json'
+        # Locate languages.json relative to this file
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        lang_file = os.path.join(current_dir, '..', 'resources', 'languages.json')
         
         # Default fallback patterns (Spanish) if file load fails
         self.patterns = {

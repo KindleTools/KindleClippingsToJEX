@@ -3,10 +3,11 @@ import os
 import sys
 
 # Add project root to python path
+# Add project root to python path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from src.parsers.kindle_parser import KindleClippingsParser
-from src.domain.models import Clipping
+from parsers.kindle_parser import KindleClippingsParser
+from domain.models import Clipping
 
 class TestKindleClippingsParser(unittest.TestCase):
     def setUp(self):

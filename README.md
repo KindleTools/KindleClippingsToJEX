@@ -28,27 +28,30 @@
    source .venv/bin/activate
    ```
 
-3. Install dependencies:
+3. Install the package in editable mode (installs dependencies automatically):
    ```bash
-   pip install -r requirements.txt
+   pip install -e .
    ```
 
 ## Configuration
 
-Before running the CLI tool, copy the sample configuration file and customize it:
+Before running the tool, copy the sample configuration file and customize it:
 
-1. Copy `config.sample.json` to `config.json`:
+1. Copy `config.sample.json` to `config.json` inside the `config` folder:
    ```bash
-   cp config.sample.json config.json
+   # Windows
+   copy config\config.sample.json config\config.json
+   # Linux/Mac
+   cp config/config.sample.json config/config.json
    ```
 
-2. Edit `config.json` with your preferences:
+2. Edit `config/config.json` with your preferences:
    ```json
    {
        "creator": "Your Name",
        "location": [0.0, 0.0, 0],
        "notebook_title": "Kindle Imports",
-       "input_file": "files/My Clippings.txt",
+       "input_file": "data/My Clippings.txt",
        "output_file": "my_import",
        "language": "en"
    }
@@ -56,15 +59,19 @@ Before running the CLI tool, copy the sample configuration file and customize it
 
    *Supported languages in `language` field: `en`, `es`, `fr`, `de`, `it`, `pt`.*
 
+   You can place your `My Clippings.txt` in the `data/` folder for easy access.
+
 ## Usage
 
 ### Graphical User Interface (GUI)
 
 The GUI allows you to preview, edit, and filter your highlights before exporting.
 
+Run from the command line:
 ```bash
-python gui_app.py
+kindle-to-jex-gui
 ```
+*Or alternatively:* `python gui.py`
 
 1. Click **"Recargar subrayados"** (Reload Highlights) to load from the default file or select a file manually.
 2. Edit text directly in the preview pane if needed.
@@ -75,26 +82,34 @@ python gui_app.py
 
 Ideal for automated scripts or quick batch processing based on `config.json`.
 
+Run from the command line:
 ```bash
-python main.py
+kindle-to-jex
 ```
+*Or alternatively:* `python cli.py`
 
 The script will generate a `.jex` file (e.g., `import_clippings.jex`) which you can then import into Joplin via **File > Import > JEX - Joplin Export File**.
 
 ## Project Structure
 
+This project follows a flat-layout structure for simplicity.
+
 ```
-├── gui_app.py           # Entry point for the GUI application
-├── main.py              # Entry point for the CLI application
-├── config.json          # User configuration (ignored by git)
-├── languages.json       # I18n regex patterns
-├── src/                 # Source code
-│   ├── domain/          # Data models
-│   ├── parsers/         # Parsing logic
-│   ├── services/        # Business logic orchestration
-│   ├── exporters/       # JEX file generation
-│   └── utils/           # Utilities (logging, etc.)
-└── tests/               # Unit tests
+├── pyproject.toml                 # Project configuration and dependencies
+├── cli.py                         # CLI entry point
+├── gui.py                         # GUI entry point
+├── config/                        # User configuration files
+│   ├── config.json
+│   └── config.sample.json
+├── data/                          # Input data directory (e.g. My Clippings.txt)
+├── logs/                          # Application logs
+├── domain/                        # Data models
+├── parsers/                       # Parsing logic
+├── services/                      # Business logic orchestration
+├── exporters/                     # JEX file generation
+├── utils/                         # Utilities (logging, etc.)
+├── resources/                     # Static resources (lines, i18n)
+└── tests/                         # Unit tests
 ```
 
 ## Contributing
