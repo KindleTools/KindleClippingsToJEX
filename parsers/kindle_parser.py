@@ -26,7 +26,7 @@ class KindleClippingsParser:
             "note": "nota|Nota",
             "page": "página",
             "added": "Añadid. el",
-            "location": "posición|Pos\."
+            "location": r"posición|Pos\."
         }
 
         if os.path.exists(lang_file):
@@ -86,10 +86,16 @@ class KindleClippingsParser:
                 loc_id = data['location'].split('-')[-1]
                 if loc_id in location_map:
                     parent_clipping = location_map[loc_id]
-                    tag_text = data['content'].replace('.', ',').strip()
-                    if tag_text and not tag_text[0].isalpha():
-                        tag_text = tag_text[1:].strip()
-                    parent_clipping.tags.append(tag_text)
+                    raw_tags = re.split(r'[.,;]', data['content'])
+                    for raw_tag in raw_tags:
+                        tag_text = raw_tag.strip()
+                        if not tag_text:
+                            continue
+                        if not tag_text[0].isalpha(): # Cleanup bullet points if any
+                             tag_text = tag_text[1:].strip()
+                        
+                        if tag_text:
+                            parent_clipping.tags.append(tag_text)
                 else:
                     logger.debug(f"Orphaned note found at location {loc_id}, skipping.")
 

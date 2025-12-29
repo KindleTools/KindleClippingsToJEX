@@ -59,22 +59,37 @@ class JexExportService:
     def _create_entity_content(self, entity: Dict[str, Any]) -> str:
         """
         Generates the string content for a Joplin entity file.
+        Matches legacy structure:
+        Title
+        <newline>
+        Body
+        <newline>
+        Properties...
+        type_: <type> (Last, no newline)
         """
         parts = []
         
-        # Title
+        # 1. Title (Header)
+        # Always put title in header if present
         if 'title' in entity:
             parts.append(f"{entity['title']}\n\n")
         
-        # Body
+        # 2. Body (Header)
         if 'body' in entity:
             parts.append(f"{entity['body']}\n\n")
             
-        # Properties
+        # 3. Properties
+        # Filter specific keys to ensure order/exclusion
+        special_keys = ['title', 'body', 'type_']
+        
         for key, value in entity.items():
-            if key in ['title', 'body']:
+            if key in special_keys:
                 continue
             parts.append(f"{key}: {value}\n")
+            
+        # 4. Type (Last)
+        if 'type_' in entity:
+            parts.append(f"type_: {entity['type_']}")
             
         return "".join(parts)
 
@@ -128,10 +143,15 @@ class JoplinEntityBuilder:
             'longitude': longitude,
             'altitude': altitude,
             'author': author,
+            'longitude': longitude,
+            'altitude': altitude,
+            'author': author,
             'source': 'kindle-to-jex',
+            'source_application': 'kindle', # Legacy compatibility
             'is_todo': 0,
             'encryption_applied': 0,
             'is_shared': 0,
+            'order': 0, # Legacy: strict 0 default
             'markup_language': 1 # Markdown
         }
         return data
@@ -143,6 +163,7 @@ class JoplinEntityBuilder:
             'id': JoplinEntityBuilder._id(),
             'title': title,
             'type_': JoplinEntityType.TAG, # Tag
+            'parent_id': '', # Legacy compat
             'created_time': now,
             'updated_time': now,
             'user_created_time': now,

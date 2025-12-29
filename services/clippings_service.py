@@ -105,7 +105,8 @@ class ClippingsService:
         if page and page.replace('-', '').isnumeric() and len(page) < 7:
              try:
                  p_val = int(page.split('-')[0]) 
-                 ref = f"[{p_val}] " 
+                 # Zero pad to 4 digits: [0043]
+                 ref = f"[{p_val:04d}] " 
              except:
                  ref = f"[{page}] "
         
@@ -117,7 +118,7 @@ class ClippingsService:
             f"- author: {clip.author}",
             f"- book: {clip.book_title}",
             f"- page: {clip.page}",
-            f"- location: {clip.location}",
+            # f"- location: {clip.location}", # Removed as requested
             f"- tags: {', '.join(clip.tags)}" if clip.tags else None
         ]
         footer = "\n".join([m for m in meta if m])

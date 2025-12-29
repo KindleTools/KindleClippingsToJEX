@@ -4,6 +4,13 @@
 
 ## Features
 
+- **Enhanced Metadata**: Extracts author, book title, location, and page number (with zero-padding, e.g., `[0042]`) from raw clippings.
+- **Smart Tagging**: Use notes as tags in Joplin. Supports splitting multiple tags by comma, semicolon, or period (e.g., "tag1, tag2").
+- **JEX Export**: Generates a standard `.jex` file (tarball of markdown files + metadata) that can be imported directly into Joplin.
+- **Deduplication**: Avoids creating duplicate notebooks or notes for existing books/authors in the export.
+
+
+
 - **Dual Interface**: Use the command-line interface (CLI) for automation or the Graphical User Interface (GUI) for visual management.
 - **Smart Parsing**: Automatically parses books, authors, and types (highlight vs. note).
 - **Metadata Preservation**: Associates notes with their corresponding highlights and tags.
