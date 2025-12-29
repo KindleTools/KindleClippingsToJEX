@@ -9,6 +9,7 @@
 - **Metadata Preservation**: Associates notes with their corresponding highlights and tags.
 - **Multi-language Support**: Configurable parsing for Kindle devices set to English, Spanish, French, German, Italian, or Portuguese.
 - **Modular Architecture**: Clean code structure designed for extensibility.
+- **High Performance**: In-memory JEX generation avoids disk I/O overhead for fast processing.
 - **Security**: Configuration is externalized to avoid committing sensitive data.
 
 ## Installation
@@ -80,15 +81,27 @@ kindle-to-jex-gui
 
 ### Command Line Interface (CLI)
 
-Ideal for automated scripts or quick batch processing based on `config.json`.
+Ideal for automated scripts or quick batch processing. You can rely on `config.json` defaults or override them via arguments.
 
 Run from the command line:
-```bash
-kindle-to-jex
-```
-*Or alternatively:* `python cli.py`
 
-The script will generate a `.jex` file (e.g., `import_clippings.jex`) which you can then import into Joplin via **File > Import > JEX - Joplin Export File**.
+```bash
+# Use defaults from config.json
+python cli.py
+
+# Override specific settings
+python cli.py --input "data/My Clippings.txt" --output "export_2025" --lang en
+```
+
+**Available Arguments:**
+
+- `--input`, `-i`: Path to source file (e.g., `data/My Clippings.txt`).
+- `--output`, `-o`: Output filename (without extension).
+- `--lang`, `-l`: Language code (`en`, `es`, `fr`, etc.).
+- `--notebook`, `-n`: Title of the root notebook in Joplin.
+- `--creator`, `-c`: Metadata author name for the created notes.
+
+The script will generate a `.jex` file which you can then import into Joplin via **File > Import > JEX - Joplin Export File**.
 
 ## Project Structure
 

@@ -38,7 +38,7 @@ class KindleClippingsParser:
                         logger.info(f"Loaded patterns for language: {self.language_code}")
                     else:
                         logger.warning(f"Language '{self.language_code}' not found in {lang_file}. Using defaults.")
-            except Exception as e:
+            except (OSError, json.JSONDecodeError) as e:
                 logger.error(f"Error loading languages.json: {e}")
         else:
              logger.warning(f"languages.json not found at {os.path.abspath(lang_file)}. Using internal defaults.")
@@ -51,7 +51,7 @@ class KindleClippingsParser:
         except FileNotFoundError:
             logger.error(f"File not found: {file_path}")
             return []
-        except Exception as e:
+        except OSError as e:
             logger.error(f"Error reading file {file_path}: {e}")
             return []
         

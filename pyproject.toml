@@ -3,11 +3,11 @@ requires = ["setuptools>=42", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "kindle_clippings_to_jex"
+name = "KindleClippingsToJEX"
 version = "0.1.0"
 description = "Convert Kindle clippings to Joplin JEX format"
 authors = [
-    {name = "User", email = "user@example.com"},
+    {name = "Andrés Jiménez", email = "andresjimenezrios@gmail.com"},
 ]
 dependencies = [
     "dateparser",
