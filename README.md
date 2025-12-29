@@ -112,6 +112,14 @@ This project follows a flat-layout structure for simplicity.
 └── tests/                         # Unit tests
 ```
 
+## Running Tests
+
+To run the unit tests, use the following command:
+
+```bash
+python -m unittest discover tests
+```
+
 ## Contributing
 
 Contributions are welcome! Please check [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines.

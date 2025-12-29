@@ -1,13 +1,7 @@
 import unittest
 import os
-import sys
-
-# Add project root to python path
-# Add project root to python path
-sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-
+import tempfile
 from parsers.kindle_parser import KindleClippingsParser
-from domain.models import Clipping
 
 class TestKindleClippingsParser(unittest.TestCase):
     def setUp(self):
@@ -20,16 +14,17 @@ En un lugar de la mancha...
 """
         self.parser = KindleClippingsParser(language_code="es")
         
-        # Write temporary sample file
-        with open("test_sample.txt", "w", encoding="utf-8") as f:
-            f.write(self.sample_content)
+        # Create a temporary file
+        self.temp_file = tempfile.NamedTemporaryFile(delete=False, mode='w', encoding='utf-8')
+        self.temp_file.write(self.sample_content)
+        self.temp_file.close()
 
     def tearDown(self):
-        if os.path.exists("test_sample.txt"):
-            os.remove("test_sample.txt")
+        if os.path.exists(self.temp_file.name):
+            os.remove(self.temp_file.name)
 
     def test_parse_single_highlight(self):
-        clippings = self.parser.parse_file("test_sample.txt", encoding="utf-8")
+        clippings = self.parser.parse_file(self.temp_file.name, encoding="utf-8")
         
         self.assertEqual(len(clippings), 1)
         clip = clippings[0]
