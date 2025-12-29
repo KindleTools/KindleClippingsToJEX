@@ -1,0 +1,44 @@
+{
+    "es": {
+        "highlight": "subrayado|Subrayado",
+        "note": "nota|Nota",
+        "page": "página",
+        "added": "Añadid. el",
+        "location": "posición|Pos\\."
+    },
+    "en": {
+        "highlight": "highlight|Highlight",
+        "note": "note|Note",
+        "page": "page|Page",
+        "added": "Added on",
+        "location": "location|Loc\\."
+    },
+    "fr": {
+        "highlight": "surlignement",
+        "note": "note",
+        "page": "page",
+        "added": "Ajouté le",
+        "location": "emplacement"
+    },
+    "de": {
+        "highlight": "markierung|Markierung",
+        "note": "notiz|Notiz",
+        "page": "seite|Seite",
+        "added": "Hinzugefügt am",
+        "location": "position|Position"
+    },
+    "it": {
+        "highlight": "evidenziazione",
+        "note": "nota",
+        "page": "pagina",
+        "added": "Aggiunto il",
+        "location": "posizione"
+    },
+    "pt": {
+        "highlight": "destaque",
+        "note": "nota",
+        "page": "página",
+        "added": "Adicionado em",
+        "location": "posição"
+    }
+}

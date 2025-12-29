@@ -1,14 +1,19 @@
 import json
 import os
 import sys
+import logging
 from src.services.clippings_service import ClippingsService
+from src.utils.logging_config import setup_logging
 
 CONFIG_FILE = 'config.json'
+
+# Setup Logger
+logger = setup_logging()
 
 def load_config():
     """Load configuration from the config file."""
     if not os.path.exists(CONFIG_FILE):
-        print(f"Error: Configuration file '{CONFIG_FILE}' not found.")
+        logger.error(f"Configuration file '{CONFIG_FILE}' not found.")
         print("Please copy 'config.sample.json' to 'config.json' and update it with your settings.")
         sys.exit(1)
     
@@ -16,10 +21,11 @@ def load_config():
         try:
             return json.load(f)
         except json.JSONDecodeError as e:
-            print(f"Error parsing '{CONFIG_FILE}': {e}")
+            logger.error(f"Error parsing '{CONFIG_FILE}': {e}")
             sys.exit(1)
 
 def main():
+    logger.info("Application started.")
     config = load_config()
     
     try:
@@ -28,16 +34,18 @@ def main():
         location = tuple(config.get('location', [0, 0, 0]))
         creator = config.get('creator', 'System')
         notebook_title = config.get('notebook_title', 'Kindle Imports')
+        language = config.get('language', 'es')
         
-        print(f"Starting process...")
-        print(f"Input: {input_file}")
-        print(f"Output: {output_file}")
+        logger.info(f"Input: {input_file}")
+        logger.info(f"Output Target: {output_file}")
+        logger.info(f"Language: {language}")
         
         if not os.path.exists(input_file):
-            print(f"Error: Input file '{input_file}' does not exist.")
+            logger.error(f"Input file '{input_file}' does not exist.")
             sys.exit(1)
 
-        service = ClippingsService()
+        # Pass language to Service
+        service = ClippingsService(language_code=language)
         service.process_clippings(
             input_file=input_file,
             output_file=output_file,
@@ -47,9 +55,7 @@ def main():
         )
             
     except Exception as e:
-        print(f"An error occurred: {e}")
-        import traceback
-        traceback.print_exc()
+        logger.critical(f"An unexpected error occurred: {e}", exc_info=True)
         sys.exit(1)
 
 if __name__ == '__main__':
