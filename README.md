@@ -1,6 +1,14 @@
 # KindleClippingsToJEX
 
+![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
+![License](https://img.shields.io/badge/license-MIT-green.svg)
+![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)
+
 **KindleClippingsToJEX** is a robust, professional-grade tool designed to process your Kindle highlights (`My Clippings.txt`) and convert them into a **Joplin Export File (.jex)**. It preserves all critical metadata (author, book, date, page/location) and intelligently organizes them into a clean notebook structure ready for direct import into [Joplin](https://joplinapp.org/).
+
+<p align="center">
+  <img src="assets/screenshot_main.png" alt="Main Interface" width="800">
+</p>
 
 Whether you are a casual reader or a power user, this tool ensures your Kindle notes are never lost and always accessible in your favorite note-taking app.
 
@@ -42,11 +50,25 @@ The project features a completely redesigned, modern "Zen" interface focused on 
     - **Duplicate**: Clone a row (useful for splitting one long highlight into two distinct notes).
     - **Delete**: Remove unwanted highlights before exporting.
 
+<p align="center">
+  <img src="assets/screenshot_empty.png" alt="Empty State" width="45%">
+  <img src="assets/screenshot_settings.png" alt="Settings Dialog" width="45%">
+</p>
+
 ### 💻 Command Line Interface (CLI)
 For power users and automation scripts, the CLI offers a headless experience.
 
 - **Batch Processing**: Process huge files in seconds without opening the window.
 - **Configurable**: Fully controlled via arguments or `config.json`.
+
+## 📥 Download
+
+**Don't want to mess with Python or code?**
+
+Simply download the latest executable for your system from the **[Releases Page](../../releases/latest)**.
+- **Windows**: `KindleToJEX-Windows.exe`
+- **Mac**: `KindleToJEX-MacOS`
+- **Linux**: `KindleToJEX-Linux.bin`
 
 ## Installation
 
@@ -69,6 +91,11 @@ For power users and automation scripts, the CLI offers a headless experience.
    ```bash
    pip install -e .
    ```
+
+4. **Build the Executable (Optional):**
+   Simply double-click `build_exe.bat` on Windows to generate a standalone `.exe` in the `dist/` folder.
+   
+   > **Note for Mac/Linux Users:** To build efficiently for all platforms without needing multiple computers, this project includes a **GitHub Actions** workflow. Simply create a "Release" in your GitHub repository, and it will automatically build and attach `.exe` (Windows), `.bin` (Linux), and Mac executables.
 
 ## Configuration
 
