@@ -142,4 +142,4 @@ cython_debug/
 .idea/
 *.jex
 files/
-ref/
+config.json

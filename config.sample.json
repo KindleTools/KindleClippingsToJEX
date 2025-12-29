@@ -1,0 +1,11 @@
+{
+    "creator": "YOUR_NAME_HERE",
+    "location": [
+        0.0,
+        0.0,
+        0
+    ],
+    "notebook_title": "KINDLE_IMPORTS",
+    "input_file": "files/txt/My Clippings.txt",
+    "output_file": "import_clippings"
+}
