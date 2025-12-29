@@ -24,6 +24,12 @@ class ClippingsService:
                          creator_name: str,
                          enable_deduplication: bool = True):
         
+        # Reset state for fresh run
+        self.entities_to_export = []
+        self.authors_cache = {}
+        self.books_cache = {}
+        self.tags_cache = {}
+
         clippings = self.parser.parse_file(input_file)
         if not clippings:
             logger.warning("No clippings found to process.")

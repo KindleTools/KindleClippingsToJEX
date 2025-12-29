@@ -157,6 +157,15 @@ To run the test suite and ensure everything is working correctly:
 python -m unittest discover tests
 ```
 
+## Future Improvements
+The following features are planned for upcoming releases to further enhance the "Zen" experience:
+
+- **📅 Reading Timeline**: A visual heatmap or bar chart to visualize your reading habits over time (e.g., "When did I read the most?").
+- **🏷️ Tag Cloud & Drag-and-Drop**: A sidebar showing your most used tags. Simply drag a tag onto a note to assign it instantly!
+- **👁️ Markdown Preview**: Toggle between the raw text editor and a rendered Markdown preview to see exactly how your notes will look in Joplin.
+- **🔍 Smart Search**: Advanced filtering capabilities, such as `book:Dune` or `tag:philosophy` for power users.
+- **⚠️ Confidence Indicator**: Visual cues (colors or icons) in the table to clearly highlight rows marked as "duplicates" before you clean them.
+
 ## Contributing
 
 Contributions are welcome! Please check [CONTRIBUTING.md](CONTRIBUTING.md) for guidelines on code style (PEP 8) and pull requests.

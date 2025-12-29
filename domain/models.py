@@ -4,6 +4,20 @@ from typing import Optional, List
 
 @dataclass
 class Clipping:
+    """
+    Represents a single highlight or note extracted from the Kindle clippings file.
+    
+    Attributes:
+        content (str): The actual text highlighted or the note content.
+        book_title (str): Title of the book.
+        author (str): Author of the book.
+        date_time (datetime): When the clipping was created.
+        location (str): Kindle location reference (e.g., "100-200").
+        page (str): Page number (if available).
+        type (str): 'highlight' or 'note'.
+        tags (List[str]): List of tags associated with this clipping.
+        is_duplicate (bool): Flag indicating if this is a duplicate/redundant entry.
+    """
     content: str
     book_title: str
     author: str

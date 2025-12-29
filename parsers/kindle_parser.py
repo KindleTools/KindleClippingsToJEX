@@ -9,6 +9,15 @@ from domain.models import Clipping
 logger = logging.getLogger("KindleToJex.Parser")
 
 class KindleClippingsParser:
+    """
+    Parses 'My Clippings.txt' files from Kindle devices.
+    
+    Supports:
+    - Multi-language detection (English, Spanish, etc. via languages.json).
+    - Separation of Highlights and Notes.
+    - Association of Notes to Highlights based on location ranges.
+    - Robust date and location parsing.
+    """
     def __init__(self, separator="==========", language_code="es"):
         self.separator = separator
         self.language_code = language_code
