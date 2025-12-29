@@ -16,7 +16,7 @@ class ConfigManager:
         "notebook_title": "Kindle Imports",
         "input_file": "",
         "output_file": "import_clippings",
-        "language": "es"
+        "language": "auto"
     }
 
     def __init__(self, config_dir: str = "config", config_filename: str = "config.json"):
@@ -29,6 +29,10 @@ class ConfigManager:
         self.project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
         
         self._load()
+
+    def get_resource_path(self, filename: str) -> str:
+        """Returns the absolute path to a resource file."""
+        return os.path.join(self.project_root, 'resources', filename)
 
     def _ensure_dir(self):
         """Ensures the configuration directory exists."""

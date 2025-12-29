@@ -18,7 +18,13 @@ class LoadFileThread(QThread):
         try:
             parser = KindleClippingsParser(language_code=self.language)
             clippings = parser.parse_file(self.file_path)
-            self.finished.emit(clippings)
+            
+            # Apply Smart Deduplication on Load
+            from services.deduplication_service import SmartDeduplicator
+            deduplicator = SmartDeduplicator()
+            cleaned_clippings = deduplicator.deduplicate(clippings)
+            
+            self.finished.emit(cleaned_clippings)
         except Exception as e:
             logging.error(f"Error loading file: {e}", exc_info=True)
             self.error.emit(str(e))

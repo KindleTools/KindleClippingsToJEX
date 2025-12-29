@@ -12,6 +12,7 @@ class Clipping:
     page: str = ""
     type: str = "highlight" 
     tags: List[str] = field(default_factory=list)
+    is_duplicate: bool = False # Used for UI flagging
 
     @property
     def title_hash(self):

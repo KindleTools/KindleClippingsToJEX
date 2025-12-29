@@ -1,8 +1,8 @@
-
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QFormLayout, QComboBox, 
                             QLineEdit, QDialogButtonBox, QLabel, QDoubleSpinBox, QSpinBox)
 from PyQt5.QtCore import Qt
 from utils.config_manager import get_config_manager
+import os
 
 class SettingsDialog(QDialog):
     """
@@ -14,16 +14,14 @@ class SettingsDialog(QDialog):
         self.setWindowTitle("Settings")
         self.setFixedWidth(400)
         
+        self.config = get_config_manager()
+        
         # Set Dialog Icon
         from PyQt5.QtGui import QIcon
-        import os
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        icon_path = os.path.join(current_dir, '..', 'resources', 'icon.png')
+        icon_path = self.config.get_resource_path('icon.png')
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 
-        self.config = get_config_manager()
-        
         self.setup_ui()
         self.load_values()
 
@@ -34,8 +32,26 @@ class SettingsDialog(QDialog):
         
         # Language Selection
         self.combo_lang = QComboBox()
-        self.combo_lang.addItems(["auto", "es", "en", "fr", "de", "it", "pt"])
         self.combo_lang.setToolTip("Language of your Kindle 'My Clippings.txt' file.")
+        
+        # Load languages dynamically
+        import json
+        lang_file = self.config.get_resource_path('languages.json')
+        
+        loaded_langs = ["auto"]
+        if os.path.exists(lang_file):
+            try:
+                with open(lang_file, 'r', encoding='utf-8') as f:
+                    data = json.load(f)
+                    loaded_langs.extend(list(data.keys()))
+            except Exception as e:
+                print(f"Error loading languages: {e}")
+                # Fallback if JSON fails
+                loaded_langs.extend(["es", "en", "fr", "de", "it", "pt"])
+        else:
+            loaded_langs.extend(["es", "en", "fr", "de", "it", "pt"])
+            
+        self.combo_lang.addItems(loaded_langs)
         
         # Default Creator
         self.txt_creator = QLineEdit()

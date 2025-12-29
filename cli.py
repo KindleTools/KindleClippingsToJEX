@@ -17,6 +17,7 @@ def parse_args():
     parser.add_argument('--lang', '-l', help="Language code (e.g., 'es', 'en')")
     parser.add_argument('--notebook', '-n', help="Root notebook title in Joplin")
     parser.add_argument('--creator', '-c', help="Author name to use for created notes")
+    parser.add_argument('--no-clean', action='store_true', help="Disable smart deduplication and cleaning")
     return parser.parse_args()
 
 def main():
@@ -54,7 +55,8 @@ def main():
             output_file=output_file,
             root_notebook_name=notebook_title,
             location=location,
-            creator_name=creator
+            creator_name=creator,
+            enable_deduplication=not args.no_clean
         )
             
     except Exception as e:

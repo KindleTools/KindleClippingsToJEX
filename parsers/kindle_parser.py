@@ -17,8 +17,9 @@ class KindleClippingsParser:
     def _load_language_patterns(self):
         """Loads regex patterns from languages.json based on configured language."""
         # Locate languages.json relative to this file
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        lang_file = os.path.join(current_dir, '..', 'resources', 'languages.json')
+        # Locate languages.json using ConfigManager
+        from utils.config_manager import get_config_manager
+        lang_file = get_config_manager().get_resource_path('languages.json')
         
         # Default fallback patterns (Spanish)
         self.default_patterns = {
@@ -88,9 +89,10 @@ class KindleClippingsParser:
             else:
                  self.patterns = self.default_patterns # Fallback
 
-        location_map: Dict[str, Clipping] = {} 
         parsed_clippings: List[Clipping] = []
-
+        notes_data: List[Dict] = []
+        
+        # Pass 1: Collect Highlights and Notes separately
         for raw in raw_clippings:
             if not raw.strip():
                 continue
@@ -109,32 +111,67 @@ class KindleClippingsParser:
                     page=data['page'],
                     type='highlight'
                 )
-                
-                loc_id = data['location'].split('-')[-1] 
-                location_map[loc_id] = clipping
                 parsed_clippings.append(clipping)
             
             elif data['type'] == 'note':
-                loc_id = data['location'].split('-')[-1]
-                if loc_id in location_map:
-                    parent_clipping = location_map[loc_id]
-                    # Normalize tags: split by common separators including newlines
-                    raw_tags = re.split(r'[.,;\n\r]', data['content'])
+                notes_data.append(data)
+
+        # Pass 2: Link Notes to Highlights
+        # Heuristic: Note location must start within Highlight range (or equal to).
+        # Optimization: Group by Book Title first to reduce search space.
+        
+        # Helper to parse location range
+        def parse_loc_range(loc_str: str) -> Tuple[int, int]:
+            # "100-200" -> (100, 200); "100" -> (100, 100)
+            parts = loc_str.split('-')
+            try:
+                s = int(parts[0])
+                e = int(parts[1]) if len(parts) > 1 else s
+                return s, e
+            except:
+                return -1, -1
+
+        # Build index by book title for fast lookup
+        highlights_by_book = {}
+        for clip in parsed_clippings:
+            if clip.book_title not in highlights_by_book:
+                highlights_by_book[clip.book_title] = []
+            highlights_by_book[clip.book_title].append(clip)
+
+        for note in notes_data:
+            book_key = note['book']
+            if book_key in highlights_by_book:
+                candidates = highlights_by_book[book_key]
+                note_start, _ = parse_loc_range(note['location'])
+                
+                # Find the best candidate
+                # A note matches if its location is inside the highlight range.
+                best_match = None
+                
+                for h in candidates:
+                    h_start, h_end = parse_loc_range(h.location)
+                    # Relaxed check: valid if note is within range
+                    # Often notes are at the END, e.g. range 10-20, note at 20.
+                    # Sometimes user adds note later, but location remains attached to anchor.
+                    if h_start <= note_start <= h_end:
+                         best_match = h
+                         # If we find one, usually that's it. But what if multiple overlap?
+                         # Usually we want the smallest enclosing one? Or the most recent?
+                         # For now, finding ANY match is better than exact match failure.
+                         break 
+                
+                if best_match:
+                    # Append tags
+                    raw_tags = re.split(r'[.,;\n\r]', note['content'])
                     for raw_tag in raw_tags:
                         tag_text = raw_tag.strip()
-                        if not tag_text:
-                            continue
+                        if not tag_text: continue
+                        if not tag_text[0].isalnum(): tag_text = tag_text[1:].strip()
                         
-                        # Cleanup bullet points or leading non-alnum chars if simple bullet
-                        if not tag_text[0].isalnum(): 
-                             tag_text = tag_text[1:].strip()
-                        
-                        if tag_text:
-                            # Avoid duplicates within the same note
-                            if tag_text not in parent_clipping.tags:
-                                parent_clipping.tags.append(tag_text)
+                        if tag_text and tag_text not in best_match.tags:
+                            best_match.tags.append(tag_text)
                 else:
-                    logger.debug(f"Orphaned note found at location {loc_id}, skipping.")
+                    logger.debug(f"Orphaned note at {note['location']} for book '{book_key}'. No matching highlight coverage.")
 
         logger.info(f"Successfully parsed {len(parsed_clippings)} clippings.")
         return parsed_clippings

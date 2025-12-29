@@ -3,6 +3,7 @@ from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, QTableWidget, QTableW
                             QHeaderView, QAbstractItemView, QLineEdit, QStyledItemDelegate, 
                             QMenu, QAction)
 from PyQt5.QtCore import Qt, pyqtSignal, QEvent, QItemSelectionModel
+import os
 
 class EmptyStateWidget(QWidget):
     """
@@ -17,10 +18,10 @@ class EmptyStateWidget(QWidget):
         layout.setAlignment(Qt.AlignCenter)
         
         self.icon_label = QLabel()
-        import os
+        from utils.config_manager import get_config_manager
         from PyQt5.QtGui import QPixmap
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        icon_path = os.path.join(current_dir, '..', 'resources', 'icon.png')
+        
+        icon_path = get_config_manager().get_resource_path('icon.png')
         if os.path.exists(icon_path):
              pixmap = QPixmap(icon_path).scaled(84, 84, Qt.KeepAspectRatio, Qt.SmoothTransformation)
              self.icon_label.setPixmap(pixmap)
@@ -75,17 +76,9 @@ class CustomEditorDelegate(QStyledItemDelegate):
         editor = super().createEditor(parent, option, index)
         if isinstance(editor, QLineEdit):
             # Enforce some padding and minimum height for comfort
-            editor.setStyleSheet("""
-                QLineEdit {
-                    padding: 6px;
-                    margin: 2px;
-                    border: 1px solid #339af0;
-                    border-radius: 4px;
-                    background-color: #141517; 
-                    color: white;
-                    font-size: 15px;
-                }
-            """)
+            # Enforce some padding and minimum height for comfort
+            # Style is now handled globally in .qss files via QLineEdit selector
+            pass
         return editor
 
     def updateEditorGeometry(self, editor, option, index):
@@ -290,6 +283,20 @@ class ClippingsTableWidget(QTableWidget):
             
             tags_str = ", ".join(clip.tags)
             self.setItem(row, 5, QTableWidgetItem(tags_str))
+
+            # Apply visual style for Duplicates
+            if clip.is_duplicate:
+                from PyQt5.QtGui import QColor, QFont
+                for col in range(self.columnCount()):
+                    item = self.item(row, col)
+                    # Dim color
+                    item.setForeground(QColor("#A0A0A0")) # Mid-grey
+                    # Strikeout
+                    font = item.font()
+                    font.setStrikeOut(True)
+                    item.setFont(font)
+                    # Tooltip explanation
+                    item.setToolTip("Marked as duplicate (subset or older edit).")
             
         self.setSortingEnabled(True)
         self._is_updating = False
@@ -341,7 +348,36 @@ class ClippingsTableWidget(QTableWidget):
         del_action.triggered.connect(lambda: self.delete_rows(rows))
         menu.addAction(del_action)
         
+        # Smart Helper
+        menu.addSeparator()
+        del_dupes_action = QAction("Clean Up: Delete All Detected Duplicates", self)
+        del_dupes_action.triggered.connect(self.delete_all_duplicates)
+        menu.addAction(del_dupes_action)
+        
         menu.exec_(self.viewport().mapToGlobal(position))
+
+    def delete_all_duplicates(self, silent_if_none=False):
+        """Removes all rows visually marked as duplicate. Returns count deleted."""
+        rows_to_delete = []
+        for r in range(self.rowCount()):
+            # Check UserRole of column 0 to check the object
+            item = self.item(r, 0)
+            if item:
+                clip = item.data(Qt.UserRole)
+                if clip.is_duplicate:
+                    rows_to_delete.append(r)
+        
+        if rows_to_delete:
+            from PyQt5.QtWidgets import QMessageBox
+            reply = QMessageBox.question(self, "Cleanup", f"Delete {len(rows_to_delete)} duplicate/redundant highlights?", QMessageBox.Yes | QMessageBox.No)
+            if reply == QMessageBox.Yes:
+                self.delete_rows(rows_to_delete)
+                return len(rows_to_delete)
+        elif not silent_if_none:
+             from PyQt5.QtWidgets import QMessageBox
+             QMessageBox.information(self, "Cleanup", "No duplicates found to delete.")
+        
+        return 0
 
     def delete_rows(self, rows):
         """Deletes specified rows from the table."""
@@ -417,8 +453,9 @@ class ClippingsTableWidget(QTableWidget):
             # Column 5: Tags
             item_tags = self.item(r, 5)
             new_tags_str = item_tags.text().strip() if item_tags else ""
-            # Parse tags back to set
-            new_tags = set(t.strip() for t in new_tags_str.split(',') if t.strip())
+            # Parse tags back to set - Support comma and semicolon as separators in UI
+            import re
+            new_tags = set(t.strip() for t in re.split(r'[,;]', new_tags_str) if t.strip())
 
             # Create final object with ALL edited fields
             final_clip = replace(original_clip, 

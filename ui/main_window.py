@@ -35,9 +35,7 @@ class MainWindow(QMainWindow):
         
         # Set Window Icon
         from PyQt5.QtGui import QIcon
-        import os
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        icon_path = os.path.join(current_dir, '..', 'resources', 'icon.png')
+        icon_path = self.config.get_resource_path('icon.png')
         if os.path.exists(icon_path):
             self.setWindowIcon(QIcon(icon_path))
 
@@ -200,6 +198,12 @@ class MainWindow(QMainWindow):
         self.btn_export.setCursor(Qt.PointingHandCursor)
         self.btn_export.setEnabled(False)
         self.btn_export.setObjectName("primaryBtn")
+
+        # Clean Up Button (Hidden by default, shown if duplicates mostly)
+        self.btn_cleanup = QPushButton("♻️ Clean Duplicates")
+        self.btn_cleanup.setCursor(Qt.PointingHandCursor)
+        self.btn_cleanup.clicked.connect(self.on_cleanup_click)
+        self.btn_cleanup.hide() # Hidden until loaded
         
         self.btn_theme = QPushButton("🌗")
         self.btn_theme.setFixedSize(40, 36)
@@ -214,6 +218,7 @@ class MainWindow(QMainWindow):
         self.btn_settings.setCursor(Qt.PointingHandCursor)
         
         header.addWidget(self.btn_load)
+        header.addWidget(self.btn_cleanup) # Add before Export? Or after?
         header.addWidget(self.btn_export)
         header.addWidget(self.btn_theme)
         header.addWidget(self.btn_settings)
@@ -301,6 +306,8 @@ class MainWindow(QMainWindow):
         self.loader_thread.error.connect(self.on_load_error)
         self.loader_thread.start()
 
+
+
     def on_load_finished(self, clippings):
         self.progress.close()
         self.clippings = clippings
@@ -309,6 +316,32 @@ class MainWindow(QMainWindow):
         self.btn_export.setEnabled(True)
         self.update_stats_label(len(clippings))
         self.update_insight_stats(clippings)
+        self.check_duplicates(clippings)
+
+    def check_duplicates(self, clippings):
+        """Checks for duplicates and updates the Cleanup button."""
+        dupe_count = sum(1 for c in clippings if c.is_duplicate)
+        if dupe_count > 0:
+            self.btn_cleanup.setText(f"♻️ Clean ({dupe_count})")
+            self.btn_cleanup.show()
+            self.btn_cleanup.setStyleSheet("background-color: #ffcccc; color: #cc0000; border: 1px solid #cc0000;")
+            # Or use a theme-compliant style. For now, rely on default or simple style.
+            # Ideally, use setProperty and re-polish for QSS.
+        else:
+            self.btn_cleanup.hide()
+
+    def on_cleanup_click(self):
+        """Triggers the table cleanup action."""
+        # We can call the table's method directly
+        # But we need to handle the update of stats afterwards
+        deleted_count = self.table.delete_all_duplicates(silent_if_none=False)
+        if deleted_count > 0:
+            # Update stats
+            # Current clippings in table
+            self.update_stats_label(self.table.rowCount())
+            # We should probably update insight stats too, but that requires re-reading ALL rows
+            # For now, just hiding the button is enough feedback
+            self.btn_cleanup.hide() 
 
     def on_load_error(self, error_msg):
         self.progress.close()
@@ -426,9 +459,7 @@ class MainWindow(QMainWindow):
         theme = self.config.get("theme", "light")
         filename = "styles_dark.qss" if theme == "dark" else "styles.qss"
         
-        # Relative path to resources
-        current_dir = os.path.dirname(os.path.abspath(__file__))
-        style_path = os.path.join(current_dir, '..', 'resources', filename)
+        style_path = self.config.get_resource_path(filename)
         
         if os.path.exists(style_path):
             with open(style_path, 'r', encoding='utf-8') as f:

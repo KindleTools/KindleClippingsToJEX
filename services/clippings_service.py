@@ -21,14 +21,23 @@ class ClippingsService:
     def process_clippings(self, input_file: str, output_file: str, 
                          root_notebook_name: str, 
                          location: Tuple[float, float, int], 
-                         creator_name: str):
+                         creator_name: str,
+                         enable_deduplication: bool = True):
         
         clippings = self.parser.parse_file(input_file)
         if not clippings:
             logger.warning("No clippings found to process.")
             return
 
-        self._process_list(clippings, output_file, root_notebook_name, location, creator_name)
+        final_clippings = clippings
+
+        if enable_deduplication:
+            # Apply Smart Deduplication (Fixes overlaps and note edits)
+            from services.deduplication_service import SmartDeduplicator
+            deduplicator = SmartDeduplicator()
+            final_clippings = deduplicator.deduplicate(clippings)
+        
+        self._process_list(final_clippings, output_file, root_notebook_name, location, creator_name)
 
     def process_clippings_from_list(self, clippings: List[Clipping], output_file: str, 
                                    root_notebook_name: str, 
@@ -48,8 +57,15 @@ class ClippingsService:
         self.entities_to_export.append(root_nb)
         root_id = root_nb['id']
 
+        skipped_dupes = 0
         for clip in clippings:
+            if clip.is_duplicate:
+                skipped_dupes += 1
+                continue
             self._process_single_clipping(clip, root_id, location, creator_name)
+
+        if skipped_dupes > 0:
+            logger.info(f"Skipped {skipped_dupes} duplicate/redundant items during export.")
 
         logger.info(f"Exporting {len(self.entities_to_export)} items to {output_file}...")
         self.exporter.create_jex(output_file, self.entities_to_export)

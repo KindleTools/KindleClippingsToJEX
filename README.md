@@ -10,7 +10,11 @@ Whether you are a casual reader or a power user, this tool ensures your Kindle n
 - **JEX Native Export**: Generates standard `.jex` files (tarball of markdown files + JSON metadata) that import flawlessly into Joplin, preserving creation dates and official titles.
 - **Enhanced Metadata Extraction**: Intelligently extracts author names, book titles, locations, and page numbers. It even handles page numbers with zero-padding (e.g., `[0042]`) to ensure proper lexical sorting.
 - **Smart Tagging**: Converts your Kindle notes into Joplin tags. Supports splitting multiple tags by comma, semicolon, or period (e.g., "productivity, psychology").
-- **Deduplication Logic**: Prevents duplicate notes. If you re-import an updated clippings file, the system is designed to identify existing highlights based on content hash and metadata.
+- **Smart Deduplication**: Intelligent algorithm that detects and merges:
+  - **Overlapping highlights**: Keeps the longest/most complete version of a correction.
+  - **Edited Notes**: Keeps only the latest version of a note at a specific location.
+  - **Accidental Highlights**: Flags fragments (< 75 chars) if they start with lowercase or lack punctuation.
+- **Smart Association**: Advanced logic to link notes to highlights even when Kindle places the note at the *end* of a long passage. Instead of exact matching, it uses sophisticated range coverage (Highlight Start ≤ Note Location ≤ Highlight End) to ensure your comments always find their parent text.
 - **Multi-language Support**: Fully configurable parsing for Kindle devices set to English, Spanish, French, German, Italian, or Portuguese.
 
 ### 🎨 "Zen" Graphical User Interface (New)
@@ -18,6 +22,7 @@ The project features a completely redesigned, modern "Zen" interface focused on 
 
 #### Key GUI Features:
 - **Instant Auto-Load**: Automatically detects and loads `data/My Clippings.txt` on startup. If not found, a friendly "Empty State" guides you.
+- **Smart Cleanup**: A **"♻️ Clean"** button appears automatically if duplicates or redundant highlights are detected. One click cleans up your file.
 - **Live Stats Dashboard**: The header updates in real-time to show exactly how many highlights are visible (e.g., *"Showing 12 of 521 highlights"*).
 - **Clean Data Table**: A clutter-free table view focusing on what matters:
   - **Date**: Sortable by timestamp.
@@ -114,10 +119,14 @@ python cli.py
 - `--input`, `-i`: Path to source file (default: from config).
 - `--output`, `-o`: Output filename (default: from config).
 - `--lang`, `-l`: Force language parsing (e.g., `en`).
+- `--notebook`, `-n`: Root notebook title for the export (default: "Kindle Imports").
+- `--creator`, `-c`: Author name metadata for the notes (default: "System").
+- *Note*: The CLI automatically applies **Smart Deduplication** unless `--no-clean` is used.
+- `--no-clean`: Disable the smart deduplication and accidental highlight cleaning.
 
 Example:
 ```bash
-python cli.py --input "data/old_clippings.txt" --output "archive_2023" --lang en
+python cli.py --input "data/old_clippings.txt" --no-clean
 ```
 
 ## Project Structure
