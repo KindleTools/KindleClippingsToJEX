@@ -69,6 +69,10 @@ config/config.json
 logs/
 *.log
 
+
 # Generated Files
 *.jex
+*.csv
+*.zip
+import_clippings.json
 kindle-to-jex-*.exe

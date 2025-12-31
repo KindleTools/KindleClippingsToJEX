@@ -360,14 +360,13 @@ class MainWindow(QMainWindow):
     def on_cleanup_click(self):
         """Triggers the table cleanup action."""
         # We can call the table's method directly
-        # But we need to handle the update of stats afterwards
         deleted_count = self.table.delete_all_duplicates(silent_if_none=False)
         if deleted_count > 0:
+            # Feedback to User
+            QMessageBox.information(self, "Cleanup Complete", f"Successfully removed {deleted_count} duplicate or garbage items.")
+            
             # Update stats
-            # Current clippings in table
             self.update_stats_label(self.table.rowCount())
-            # We should probably update insight stats too, but that requires re-reading ALL rows
-            # For now, just hiding the button is enough feedback
             self.btn_cleanup.hide() 
 
     def on_load_error(self, error_msg):
@@ -386,8 +385,14 @@ class MainWindow(QMainWindow):
             for url in event.mimeData().urls():
                 if url.toLocalFile().lower().endswith('.txt'):
                     event.acceptProposedAction()
+                    self.statusBar().showMessage("Drop to load 'My Clippings.txt'...", 5000)
+                    # Optional: Add visual highlight to central widget?
                     return
         event.ignore()
+    
+    def dragLeaveEvent(self, event):
+        self.statusBar().clearMessage()
+        super().dragLeaveEvent(event)
 
     def dropEvent(self, event):
         """Handles the file drop."""

@@ -5,7 +5,7 @@ from parsers.kindle_parser import KindleClippingsParser
 from exporters.base import BaseExporter
 from exporters.joplin_exporter import JoplinExporter
 from exporters.csv_exporter import CsvExporter
-from exporters.csv_exporter import CsvExporter
+
 from exporters.markdown_exporter import MarkdownExporter
 from exporters.json_exporter import JsonExporter
 

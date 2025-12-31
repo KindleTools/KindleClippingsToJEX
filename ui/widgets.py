@@ -373,46 +373,30 @@ class ClippingsTableWidget(QTableWidget):
         menu.exec_(self.viewport().mapToGlobal(position))
 
     def copy_to_clipboard_csv(self, rows):
-        """Copies selected rows to clipboard as CSV string."""
+        """Copies selected rows to clipboard as CSV string (Consistent with Export)."""
         clippings = self.get_clippings_from_rows(rows)
         if not clippings: return
         
-        output = io.StringIO()
-        fieldnames = ['book_title', 'author', 'content', 'type', 'date_time', 'page', 'location', 'tags']
-        writer = csv.DictWriter(output, fieldnames=fieldnames)
-        writer.writeheader()
-        
-        for clipping in clippings:
-            writer.writerow({
-                'book_title': clipping.book_title,
-                'author': clipping.author,
-                'content': clipping.content,
-                'type': clipping.type,
-                'date_time': clipping.date_time.isoformat() if clipping.date_time else '',
-                'page': clipping.page,
-                'location': clipping.location,
-                'tags': ', '.join(clipping.tags)
-            })
+        # Use Exporter logic
+        from exporters.csv_exporter import CsvExporter
+        exporter = CsvExporter()
+        output_str = exporter.create_csv_string(clippings)
             
-        QApplication.clipboard().setText(output.getvalue())
+        QApplication.clipboard().setText(output_str)
         self.status_message.emit(f"✅ Copied {len(clippings)} rows as CSV", 3000)
 
     def copy_to_clipboard_json(self, rows):
-        """Copies selected rows to clipboard as JSON string."""
+        """Copies selected rows to clipboard as JSON string (Consistent with Export)."""
         clippings = self.get_clippings_from_rows(rows)
         if not clippings: return
         
-        data_list = []
-        for clip in clippings:
-             data_list.append({
-                'book_title': clip.book_title,
-                'author': clip.author,
-                'content': clip.content,
-                'date': clip.date_time.isoformat() if clip.date_time else None,
-                'tags': list(clip.tags)
-            })
+        # Use Exporter logic
+        from exporters.json_exporter import JsonExporter
+        # We can pass context locally if we knew it, or just partial defaults
+        exporter = JsonExporter()
+        output_str = exporter.create_json_string(clippings, context={"creator": "GUI Clipboard"})
             
-        QApplication.clipboard().setText(json.dumps(data_list, indent=2, ensure_ascii=False))
+        QApplication.clipboard().setText(output_str)
         self.status_message.emit(f"✅ Copied {len(clippings)} rows as JSON", 3000)
 
     def copy_to_clipboard_md(self, rows):
@@ -420,15 +404,12 @@ class ClippingsTableWidget(QTableWidget):
         clippings = self.get_clippings_from_rows(rows)
         if not clippings: return
         
-        output = []
-        for clip in clippings:
-            # Simple MD format for clipboard (no YAML to avoid clutter when pasting)
-            md = f"> {clip.content}\n\n— *{clip.book_title}* by **{clip.author}**"
-            if clip.tags:
-                md += f" #{' #'.join(clip.tags)}"
-            output.append(md)
+        # Use Exporter logic
+        from exporters.markdown_exporter import MarkdownExporter
+        exporter = MarkdownExporter()
+        output_str = exporter.create_clipboard_markdown(clippings)
             
-        QApplication.clipboard().setText("\n\n---\n\n".join(output))
+        QApplication.clipboard().setText(output_str)
         self.status_message.emit(f"✅ Copied {len(clippings)} rows as Markdown", 3000)
 
     def delete_all_duplicates(self, silent_if_none=False):

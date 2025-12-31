@@ -64,6 +64,16 @@ El `JoplinExporter` no debe construir strings manualmente. Debe:
 
 **Beneficio**: Si cambia la especificación de Joplin o agregamos otro formato, la lógica de validación está centralizada en la Entidad, no dispersa en el servicio de exportación.
 
+### 3.3. Paridad de Exportación (Feature Parity)
+Garantizar que todos los formatos de salida (JEX, CSV, JSON, MD) expongan el mismo nivel de detalle en los metadatos.
+*   **Unificación**: Si `JEX` tiene `location`, `CSV` y `JSON` deben tenerlo también.
+*   **Flags de Estado**: Incluir `is_duplicate` y hashes de integridad en todos los formatos estructurados.
+
+### 3.4. Validación Cross-Platform (CLI & IO)
+Asegurar que las operaciones de sistema de archivos críticas funcionen idénticamente en Windows/Linux/Mac.
+*   **Compresión ZIP**: Uso de librerías estándar compatibles con rutas de Windows (`\` vs `/`).
+*   **Path Sanitization**: Manejo robusto de caracteres ilegales en nombres de archivo para exportaciones masivas (ej. Markdown folder structure).
+
 ---
 
 ## 🏗️ Fase 4: Arquitectura DDD (Domain-Driven Design)

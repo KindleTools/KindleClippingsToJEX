@@ -9,14 +9,12 @@ class JsonExporter(BaseExporter):
     Ideal for backups or developers who want to process the data programmatically.
     """
     
-    def export(self, clippings: List[Clipping], output_file: str, context: Dict[str, Any] = None):
+    def create_json_string(self, clippings: List[Clipping], context: Dict[str, Any] = None) -> str:
         """
-        Writes a list of Clipping objects to a JSON file.
+        Generates the JSON string for a list of clippings.
         """
-        # Ensure output filename ends with .json
-        if not output_file.lower().endswith('.json'):
-            output_file += '.json'
-            
+        context = context or {}
+        
         # Convert Clipping objects to dictionaries
         data_list = []
         for clip in clippings:
@@ -30,22 +28,34 @@ class JsonExporter(BaseExporter):
                 'location': clip.location,
                 'tags': clip.tags,
                 # Include raw boolean indicating if it was flagged as dupe
-                'is_duplicate': clip.is_duplicate 
+                'is_duplicate': clip.is_duplicate,
+                'source': 'kindle'
             }
             data_list.append(item)
             
         export_data = {
             "meta": {
                 "count": len(data_list),
-                "generated_at": context.get('generated_at', None), # Could be added later
+                "generated_at": context.get('generated_at', None), 
                 "creator": context.get('creator', "System"),
                 "source": "KindleClippingsToJEX"
             },
             "clippings": data_list
         }
+        return json.dumps(export_data, indent=2, ensure_ascii=False)
+
+    def export(self, clippings: List[Clipping], output_file: str, context: Dict[str, Any] = None):
+        """
+        Writes a list of Clipping objects to a JSON file.
+        """
+        # Ensure output filename ends with .json
+        if not output_file.lower().endswith('.json'):
+            output_file += '.json'
+            
+        json_content = self.create_json_string(clippings, context)
         
         try:
             with open(output_file, 'w', encoding='utf-8') as f:
-                json.dump(export_data, f, indent=2, ensure_ascii=False)
+                f.write(json_content)
         except Exception as e:
             raise IOError(f"Failed to write JSON file: {e}")

@@ -56,19 +56,27 @@ class KindleClippingsParser:
 
     def _detect_language(self, content: str) -> str:
         """Attempts to detect language by checking patterns against file content."""
-        logger.info("Attempting auto-detection of language...")
+        logger.info("Attempting robust auto-detection of language...")
         sample = content[:5000] # Check first 5000 chars
         
+        scores = {}
+        
         for lang_code, patterns in self.available_languages.items():
-            # Check for 'highlight' keyword presence
-            # We use the raw string from json which might contain regex like "subrayado|Subrayado"
-            # simpler check: just seeing if the regex finds a match in the sample
-            try:
-                if re.search(patterns['added'], sample) or re.search(patterns['highlight'], sample):
-                    logger.info(f"Language detected: {lang_code}")
-                    return lang_code
-            except re.error:
-                continue
+            score = 0
+            # Check for multiple keywords to be sure
+            keywords = [patterns.get('highlight'), patterns.get('note'), patterns.get('location'), patterns.get('added')]
+            for kw in keywords:
+                if kw and re.search(kw, sample, re.IGNORECASE):
+                    score += 1
+            
+            if score > 0:
+                scores[lang_code] = score
+                
+        if scores:
+            # Pick the language with the most keyword matches
+            best_lang = max(scores, key=scores.get)
+            logger.info(f"Language detected: {best_lang} (Score: {scores[best_lang]})")
+            return best_lang
                 
         logger.warning("Auto-detection failed. Falling back to 'es'.")
         return 'es'

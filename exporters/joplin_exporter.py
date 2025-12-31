@@ -189,7 +189,7 @@ class JoplinExporter(BaseExporter):
         book_id = self.books_cache[book_cache_key]
 
         # Create Note
-        note_title = self._format_title(clip.content, clip.page)
+        note_title = self._format_title(clip)
         note_body = self._format_body(clip)
         
         note = self.builder.create_note(
@@ -273,15 +273,43 @@ class JoplinExporter(BaseExporter):
             
         return "".join(parts)
 
-    def _format_title(self, text: str, page: str) -> str:
-        snippet = text[:50].replace('\n', ' ')
-        ref = ''
-        if page and page.replace('-', '').isnumeric() and len(page) < 7:
-             try:
-                 p_val = int(page.split('-')[0]) 
-                 ref = f"[{p_val:04d}] " 
-             except:
-                 ref = f"[{page}] "
+    def _format_title(self, clip: Clipping) -> str:
+        snippet = clip.content[:50].replace('\n', ' ')
+        page_num = 0
+        
+        # Strategy 1: Real Page Number
+        if clip.page:
+            clean_page = clip.page.replace('-', '')
+            if clean_page.isnumeric():
+                try:
+                    # If range "100-102", take 100
+                    page_num = int(clip.page.split('-')[0])
+                except ValueError:
+                    page_num = 0
+        
+        # Strategy 2: Heuristic from Location
+        # If no valid page found, try calculating from location
+        # Standard heuristic: Location / 16.69 approx = Page
+        if page_num == 0 and clip.location:
+             clean_loc = clip.location.replace('-', '')
+             if clean_loc.isnumeric():
+                 try:
+                     l_val = int(clip.location.split('-')[0])
+                     page_num = int(l_val / 16.69)
+                     # Ensure at least page 1 if location exists
+                     if page_num == 0: page_num = 1
+                 except ValueError:
+                     page_num = 0
+
+        # Formatting
+        if page_num > 0:
+            # Clean [0042] format
+            ref = f"[{page_num:04d}] "
+        else:
+            # Ultimate Fallback if neither page nor location are numbers (e.g. "ix" or empty)
+            # Use original text or empty
+            ref = f"[{clip.page}] " if clip.page else ""
+            
         return f"{ref}{snippet}"
 
     def _format_body(self, clip: Clipping) -> str:
@@ -290,6 +318,7 @@ class JoplinExporter(BaseExporter):
             f"- author: {clip.author}",
             f"- book: {clip.book_title}",
             f"- page: {clip.page}",
+            f"- location: {clip.location}",
             f"- tags: {', '.join(clip.tags)}" if clip.tags else None
         ]
         footer = "\n".join([m for m in meta if m])

@@ -8,6 +8,33 @@ class CsvExporter(BaseExporter):
     Handles the export of clippings to CSV format.
     """
     
+    def create_csv_string(self, clippings: List[Clipping]) -> str:
+        """
+        Generates the CSV string content for a list of clippings.
+        Useful for clipboard operations or in-memory processing.
+        """
+        import io
+        output = io.StringIO()
+        fieldnames = ['book_title', 'author', 'content', 'type', 'date_time', 'page', 'location', 'tags', 'is_duplicate', 'source']
+        writer = csv.DictWriter(output, fieldnames=fieldnames)
+        writer.writeheader()
+        
+        for clipping in clippings:
+            writer.writerow({
+                'book_title': clipping.book_title,
+                'author': clipping.author,
+                'content': clipping.content,
+                'type': clipping.type,
+                'date_time': clipping.date_time.isoformat() if clipping.date_time else '',
+                'page': clipping.page,
+                'location': clipping.location,
+                'tags': ', '.join(clipping.tags),
+                'is_duplicate': clipping.is_duplicate,
+                'source': 'kindle'
+            })
+        
+        return output.getvalue()
+
     def export(self, clippings: List[Clipping], output_file: str, context: Dict[str, Any] = None):
         """
         Writes a list of Clipping objects to a CSV file.
@@ -17,24 +44,11 @@ class CsvExporter(BaseExporter):
         if not output_file.lower().endswith('.csv'):
             output_file += '.csv'
             
-        fieldnames = ['book_title', 'author', 'content', 'type', 'date_time', 'page', 'location', 'tags']
+        csv_content = self.create_csv_string(clippings)
         
         try:
-            with open(output_file, 'w', newline='', encoding='utf-8-sig') as csvfile:
-                writer = csv.DictWriter(csvfile, fieldnames=fieldnames)
-                writer.writeheader()
-                
-                for clipping in clippings:
-                    writer.writerow({
-                        'book_title': clipping.book_title,
-                        'author': clipping.author,
-                        'content': clipping.content,
-                        'type': clipping.type,
-                        'date_time': clipping.date_time.isoformat() if clipping.date_time else '',
-                        'page': clipping.page,
-                        'location': clipping.location,
-                        'tags': ', '.join(clipping.tags)
-                    })
+            with open(output_file, 'w', newline='', encoding='utf-8-sig') as f:
+                f.write(csv_content)
         except Exception as e:
             raise IOError(f"Failed to write CSV file: {e}")
 
