@@ -4,6 +4,7 @@ from domain.models import Clipping
 from parsers.kindle_parser import KindleClippingsParser
 from exporters.joplin_exporter import JexExportService, JoplinEntityBuilder
 from exporters.csv_exporter import CsvExporter
+from exporters.markdown_exporter import MarkdownExporter
 
 logger = logging.getLogger("KindleToJex.Service")
 
@@ -13,6 +14,7 @@ class ClippingsService:
         self.parser = KindleClippingsParser(language_code=language_code)
         self.exporter = JexExportService()
         self.csv_exporter = CsvExporter()
+        self.md_exporter = MarkdownExporter()
         self.builder = JoplinEntityBuilder()
         
         self.authors_cache: Dict[str, str] = {}
@@ -67,6 +69,15 @@ class ClippingsService:
         if export_format.lower() == 'csv':
             self.csv_exporter.export_clippings(clippings, output_file)
             logger.info("CSV Export completed.")
+            return
+
+        if export_format.lower() == 'md':
+            context = {
+                'creator': creator_name,
+                'location': location
+            }
+            self.md_exporter.export_clippings(clippings, output_file, context)
+            logger.info("Markdown (ZIP) Export completed.")
             return
 
         # JEX Export Logic

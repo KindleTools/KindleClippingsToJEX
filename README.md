@@ -38,6 +38,7 @@ Whether you are a casual reader or a power user, this tool ensures your Kindle n
 ### 🚀 Core Functionality
 - **JEX Native Export**: Generates standard `.jex` files (tarball of markdown files + JSON metadata) that import flawlessly into Joplin, preserving creation dates and official titles.
 - **CSV Export**: Optionally export your curated highlights to a standardized **CSV** format, perfect for importing into Excel, Notion, or other database tools. Uses UTF-8-SIG encoding for maximum compatibility with Microsoft Excel.
+- **Markdown Export (Obsidian)**: Generates a **.zip** archive containing individual `.md` files for each note. Each file includes YAML frontmatter (title, author, tags, date), making it fully compatible with **Obsidian**, Logseq, and other PKM tools.
 - **Enhanced Metadata Extraction**: Intelligently extracts author names, book titles, locations, and page numbers. It even handles page numbers with zero-padding (e.g., `[0042]`) to ensure proper lexical sorting.
   - **Geo-tagging Support**: Optionally add location data (lat/long) to your imported notes via `config.json`. Joplin uses this to display your notes on a map (via OpenStreetMap).
 - **Smart Tagging**: Converts your Kindle notes into Joplin tags. Supports splitting multiple tags by comma, semicolon, or period (e.g., "productivity, psychology").
@@ -154,11 +155,12 @@ python main.py
    - Right-click and select **"Delete Row(s)"** to remove irrelevant highlights.
    - Edit the **Content** or **Tags** columns to fix typos or add context.
 3. **Export**: 
-   - **Export Visible**: Click the main **"Export Notes"** button. You can choose between **JEX** (for Joplin) or **CSV** (for Excel/Spreadsheets).
-   - **Export Selection**: Select specific rows, Right-Click > **"Export Selected"** to save just those notes (JEX or CSV).
+   - **Export Visible**: Click the main **"Export Notes"** button. You can choose between **JEX** (for Joplin), **CSV** (for Excel), or **Markdown ZIP** (for Obsidian).
+   - **Export Selection**: Select specific rows, Right-Click > **"Export Selected"** to save just those notes (JEX, CSV, or ZIP).
 4. **Import**: 
    - **Joplin**: Go to **File > Import > JEX - Joplin Export File**.
-   - **Excel**: Open the generated CSV file directly. Use Data > From Text/CSV if needed, but it should open automatically.
+   - **Obsidian**: Unzip the downloaded file and drag the folder into your Obsidian Vault.
+   - **Excel**: Open the generated CSV file directly.
 
 ### Using the CLI
 
@@ -173,7 +175,7 @@ python cli.py
 - `--lang`, `-l`: Force language parsing (e.g., `en`).
 - `--notebook`, `-n`: Root notebook title for the export (default: "Kindle Imports").
 - `--creator`, `-c`: Author name metadata for the notes (default: "System").
-- `--format`, `-f`: Output format, either `jex` (default) or `csv`.
+- `--format`, `-f`: Output format: `jex`, `csv`, or `md` (Markdown ZIP).
 - *Note*: The CLI automatically applies **Smart Deduplication** unless `--no-clean` is used.
 - `--no-clean`: Disable the smart deduplication and accidental highlight cleaning.
 

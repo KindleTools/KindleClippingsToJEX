@@ -17,7 +17,7 @@ def parse_args():
     parser.add_argument('--notebook', '-n', help="Root notebook title in Joplin")
     parser.add_argument('--creator', '-c', help="Author name to use for created notes")
     parser.add_argument('--no-clean', action='store_true', help="Disable smart deduplication and cleaning")
-    parser.add_argument('--format', '-f', choices=['jex', 'csv'], default='jex', help="Output format: 'jex' (default) or 'csv'")
+    parser.add_argument('--format', '-f', choices=['jex', 'csv', 'md'], default='jex', help="Output format: 'jex' (default), 'csv', or 'md' (Obsidian ZIP)")
     return parser.parse_args()
 
 def main():

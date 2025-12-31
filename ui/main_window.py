@@ -415,7 +415,7 @@ class MainWindow(QMainWindow):
         if not default_output.endswith('.jex'):
              default_output += ".jex"
 
-        file_path, _ = QFileDialog.getSaveFileName(self, title, default_output, "Joplin Export (*.jex);;CSV File (*.csv)")
+        file_path, _ = QFileDialog.getSaveFileName(self, title, default_output, "Joplin Export (*.jex);;CSV File (*.csv);;Markdown ZIP (*.zip)")
         if not file_path:
             return
             
@@ -442,7 +442,7 @@ class MainWindow(QMainWindow):
             root_notebook=self.config.get('notebook_title', 'Kindle Imports'),
             location=tuple(self.config.get('location', [0,0,0])),
             creator=self.config.get('creator', 'System'),
-            export_format='csv' if file_path.lower().endswith('.csv') else 'jex'
+            export_format='csv' if file_path.lower().endswith('.csv') else ('md' if file_path.lower().endswith('.zip') else 'jex')
         )
         self.export_thread.finished.connect(self.on_export_finished)
         self.export_thread.error.connect(self.on_export_error)
