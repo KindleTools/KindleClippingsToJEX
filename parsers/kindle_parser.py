@@ -3,8 +3,10 @@ import dateparser
 import json
 import os
 import logging
-from typing import List, Dict, Optional
+from typing import List, Dict, Optional, Tuple
 from domain.models import Clipping
+from parsers.patterns import DEFAULT_PATTERNS
+from utils.text_cleaner import TextCleaner
 
 logger = logging.getLogger("KindleToJex.Parser")
 
@@ -31,13 +33,8 @@ class KindleClippingsParser:
         lang_file = get_config_manager().get_resource_path('languages.json')
         
         # Default fallback patterns (Spanish)
-        self.default_patterns = {
-            "highlight": "subrayado|Subrayado",
-            "note": "nota|Nota",
-            "page": "página",
-            "added": "Añadid. el",
-            "location": r"posición|Pos\."
-        }
+        # Use imported constant as default
+        self.default_patterns = DEFAULT_PATTERNS
         self.patterns = self.default_patterns
 
         self.available_languages = {}
@@ -111,6 +108,11 @@ class KindleClippingsParser:
         if content is None:
             logger.error(f"Failed to decode file {file_path}. Tried encodings: {encodings_to_try}")
             return []
+
+        # Explicit BOM removal (even if handled by encoding, this is a safety net)
+        if content.startswith('\ufeff'):
+            content = content[1:]
+            logger.debug("BOM detected and removed explicitly.")
         
         raw_clippings = content.split(self.separator)
         
@@ -254,6 +256,9 @@ class KindleClippingsParser:
             date_obj = None
 
         content = "\n".join(lines[2:])
+        
+        # Apply strict cleaning to the content
+        content = TextCleaner.clean_text(content)
 
         return {
             'book': title,

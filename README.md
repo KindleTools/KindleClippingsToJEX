@@ -42,12 +42,19 @@ Whether you are a casual reader or a power user, this tool ensures your Kindle n
 - **JSON Export**: Export raw data in **JSON** format for developers, backups, or custom processing scripts.
 - **Enhanced Metadata Extraction**: Intelligently extracts author names, book titles, locations, and page numbers. It even handles page numbers with zero-padding (e.g., `[0042]`) to ensure proper lexical sorting.
   - **Geo-tagging Support**: Optionally add location data (lat/long) to your imported notes via `config.json`. Joplin uses this to display your notes on a map (via OpenStreetMap).
+- **Smart Synchronization System**: Say goodbye to duplicates!
+  - **Deterministic IDs**: Generates stable, content-based IDs for every note, notebook, and tag. This means you can re-export your Kindle file 100 times, and Joplin will intelligently **update** your existing notes instead of creating messy duplicates.
 - **Smart Tagging**: Converts your Kindle notes into Joplin tags. Supports splitting multiple tags by comma, semicolon, or period (e.g., "productivity, psychology").
 - **Smart Deduplication**: Intelligent algorithm that detects and merges:
   - **Overlapping highlights**: Keeps the longest/most complete version of a correction.
   - **Edited Notes**: Keeps only the latest version of a note at a specific location.
   - **Accidental Highlights**: Flags fragments (< 75 chars) if they start with lowercase or lack punctuation.
 - **Smart Association**: Advanced logic to link notes to highlights even when Kindle places the note at the *end* of a long passage. Instead of exact matching, it uses sophisticated range coverage (Highlight Start ≤ Note Location ≤ Highlight End) to ensure your comments always find their parent text.
+- **Advanced Text Hygiene**: Automatically polishes your highlights to professional standards:
+  - **Unicode (NFC) Normalization**: Ensures cross-platform compatibility (Windows/Mac/Linux) for special characters, preventing issues with Obsidian/Joplin search and linking.
+  - **Typesetting Cleanup**: Fixes common Kindle issues like double spaces, spaces before punctuation (e.g., `Hello , world`), and capitalization errors.
+  - **Invisible Character Removal**: Strips byte-order marks (BOM) and zero-width spaces that often corrupt text searches.
+- **Robust Architecture**: Built with strict Type Handling (Dataclasses) to prevent data corruption during export and ensure 100% compliant JEX files.
 - **Multi-language Support**: Fully configurable parsing for Kindle devices set to English, Spanish, French, German, Italian, or Portuguese.
 
 ### 🎨 "Zen" Graphical User Interface (New)

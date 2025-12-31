@@ -1,35 +1,23 @@
 import tarfile
 import io
 import logging
-from enum import IntEnum
+import hashlib
 from uuid import uuid4
 from datetime import datetime
 from typing import Dict, Any, List, Tuple
 from domain.models import Clipping
+from domain.joplin import (
+    JoplinNotebook, JoplinNote, JoplinTag, 
+    JoplinTagAssociation, JoplinEntityType
+)
 from exporters.base import BaseExporter
 
 logger = logging.getLogger("KindleToJex.JoplinExporter")
 
-class JoplinEntityType(IntEnum):
-    NOTE = 1
-    FOLDER = 2
-    SETTING = 3
-    RESOURCE = 4
-    TAG = 5
-    NOTE_TAG = 6
-    SEARCH = 7
-    ALARM = 8
-    MASTER_KEY = 9
-    ITEM_CHANGE = 10
-    NOTE_RESOURCE = 11
-    RESOURCE_LOCAL_STATE = 12
-    REVISION = 13
-    MIGRATION = 14
-    SMART_FILTER = 15
-
 class JoplinEntityBuilder:
     """
-    Helper to create dictionaries representing Joplin entities (Notes, Notebooks, Tags).
+    Helper to create Dictionary-like objects representing Joplin entities.
+    Now uses strict Dataclasses from domain.joplin.
     """
     
     @staticmethod
@@ -37,87 +25,101 @@ class JoplinEntityBuilder:
         return datetime.now().isoformat(timespec='milliseconds').replace('+00:00', 'Z')
 
     @staticmethod
-    def _id():
+    def _generate_id(key: str = None) -> str:
+        """
+        Generates a 32-char hex ID.
+        If 'key' is provided, returns a deterministic MD5 hash of the key.
+        If 'key' is None, returns a random UUID.
+        """
+        if key:
+            # MD5 is used here for deterministic ID generation, not security.
+            # We want "Title" -> Always same ID.
+            return hashlib.md5(key.encode('utf-8')).hexdigest()
         return uuid4().hex
 
     @staticmethod
-    def create_notebook(title: str, parent_id: str = "") -> Dict[str, Any]:
+    def create_notebook(title: str, parent_id: str = "") -> JoplinNotebook:
         now = JoplinEntityBuilder._now()
-        data = {
-            'id': JoplinEntityBuilder._id(),
-            'parent_id': parent_id,
-            'title': title,
-            'type_': JoplinEntityType.FOLDER,
-            'created_time': now,
-            'updated_time': now,
-            'user_created_time': now,
-            'user_updated_time': now,
-            'encryption_applied': 0,
-            'is_shared': 0
-        }
-        return data
+        # ID is based on TITLE ONLY to allow moving notebook without changing ID
+        # This enables potential future "move" instead of "duplicate" behavior
+        id_seed = f"notebook:{title}"
+        return JoplinNotebook(
+            id=JoplinEntityBuilder._generate_id(id_seed),
+            parent_id=parent_id,
+            title=title,
+            created_time=now,
+            updated_time=now,
+            user_created_time=now,
+            user_updated_time=now
+        )
 
     @staticmethod
     def create_note(title: str, body: str, parent_id: str, 
                    created_time: datetime = None, 
-                   latitude=0.0, longitude=0.0, altitude=0.0, author="") -> Dict[str, Any]:
+                   latitude=0.0, longitude=0.0, altitude=0.0, author="",
+                   clipping_ref: Clipping = None) -> JoplinNote:
         
         now = created_time.isoformat(timespec='milliseconds') if created_time else JoplinEntityBuilder._now()
-        data = {
-            'id': JoplinEntityBuilder._id(),
-            'parent_id': parent_id,
-            'title': title,
-            'body': body,
-            'type_': JoplinEntityType.NOTE,
-            'created_time': now,
-            'updated_time': now,
-            'user_created_time': now,
-            'user_updated_time': now,
-            'latitude': latitude,
-            'longitude': longitude,
-            'altitude': altitude,
-            'author': author,
-            'source': 'kindle-to-jex',
-            'source_application': 'kindle',
-            'is_todo': 0,
-            'encryption_applied': 0,
-            'is_shared': 0,
-            'order': 0,
-            'markup_language': 1 # Markdown
-        }
-        return data
+        
+        # Deterministic ID strategy for Notes:
+        # We want to allow content edits without changing ID (so Joplin updates the note),
+        # BUT we need uniqueness.
+        # Strategy: Book + Location is the most stable "Identity" of a highlight.
+        if clipping_ref:
+            # key: "note:BookTitle:Location:Page" 
+            # (Adding page to be extra safe against location formatting changes)
+            id_seed = f"note:{clipping_ref.book_title}:{clipping_ref.location}:{clipping_ref.page}"
+        else:
+            # Fallback for manual notes or unknown origin
+            id_seed = None 
+
+        return JoplinNote(
+            id=JoplinEntityBuilder._generate_id(id_seed),
+            parent_id=parent_id,
+            title=title,
+            body=body,
+            created_time=now,
+            updated_time=now,
+            user_created_time=now,
+            user_updated_time=now,
+            latitude=latitude,
+            longitude=longitude,
+            altitude=altitude,
+            author=author,
+            source='kindle-to-jex',
+            source_application='kindle',
+            is_todo=0,
+            markup_language=1
+        )
 
     @staticmethod
-    def create_tag(title: str) -> Dict[str, Any]:
+    def create_tag(title: str) -> JoplinTag:
         now = JoplinEntityBuilder._now()
-        data = {
-            'id': JoplinEntityBuilder._id(),
-            'title': title,
-            'type_': JoplinEntityType.TAG,
-            'parent_id': '',
-            'created_time': now,
-            'updated_time': now,
-            'user_created_time': now,
-            'user_updated_time': now,
-            'encryption_applied': 0
-        }
-        return data
+        id_seed = f"tag:{title.lower().strip()}" # Tags should be case-insensitive id-wise
+        return JoplinTag(
+            id=JoplinEntityBuilder._generate_id(id_seed),
+            title=title,
+            parent_id='',
+            created_time=now,
+            updated_time=now,
+            user_created_time=now,
+            user_updated_time=now
+        )
 
     @staticmethod
-    def create_tag_association(tag_id: str, note_id: str) -> Dict[str, Any]:
+    def create_tag_association(tag_id: str, note_id: str) -> JoplinTagAssociation:
         now = JoplinEntityBuilder._now()
-        data = {
-            'id': JoplinEntityBuilder._id(),
-            'note_id': note_id,
-            'tag_id': tag_id,
-            'type_': JoplinEntityType.NOTE_TAG,
-            'created_time': now,
-            'updated_time': now,
-            'user_created_time': now,
-            'user_updated_time': now,
-            'encryption_applied': 0
-        }
-        return data
+        # Association ID should also be deterministic to avoid duplicate links
+        id_seed = f"assoc:{note_id}:{tag_id}"
+        return JoplinTagAssociation(
+            id=JoplinEntityBuilder._generate_id(id_seed),
+            note_id=note_id,
+            tag_id=tag_id,
+            created_time=now,
+            updated_time=now,
+            user_created_time=now,
+            user_updated_time=now
+        )
 
 class JoplinExporter(BaseExporter):
     """
@@ -125,7 +127,7 @@ class JoplinExporter(BaseExporter):
     the logic for organizing clippings into notebooks.
     """
     def __init__(self):
-        self.entities_to_export: List[Dict] = []
+        self.entities_to_export: List[Any] = []
         self.authors_cache: Dict[str, str] = {}
         self.books_cache: Dict[str, str] = {}
         self.tags_cache: Dict[str, str] = {}
@@ -150,7 +152,7 @@ class JoplinExporter(BaseExporter):
         # 3. Create Root Notebook
         root_nb = self.builder.create_notebook(root_notebook_name)
         self.entities_to_export.append(root_nb)
-        root_id = root_nb['id']
+        root_id = root_nb.id
         
         # 4. Process Clippings
         skipped_dupes = 0
@@ -174,7 +176,7 @@ class JoplinExporter(BaseExporter):
         if author_name not in self.authors_cache:
             author_nb = self.builder.create_notebook(author_name, parent_id=root_id)
             self.entities_to_export.append(author_nb)
-            self.authors_cache[author_name] = author_nb['id']
+            self.authors_cache[author_name] = author_nb.id
         author_id = self.authors_cache[author_name]
 
         # Book Notebook
@@ -183,7 +185,7 @@ class JoplinExporter(BaseExporter):
         if book_cache_key not in self.books_cache:
             book_nb = self.builder.create_notebook(book_title, parent_id=author_id)
             self.entities_to_export.append(book_nb)
-            self.books_cache[book_cache_key] = book_nb['id']
+            self.books_cache[book_cache_key] = book_nb.id
         book_id = self.books_cache[book_cache_key]
 
         # Create Note
@@ -198,7 +200,8 @@ class JoplinExporter(BaseExporter):
             latitude=location[0],
             longitude=location[1],
             altitude=location[2],
-            author=creator
+            author=creator,
+            clipping_ref=clip
         )
         self.entities_to_export.append(note)
         
@@ -207,13 +210,13 @@ class JoplinExporter(BaseExporter):
             if tag_str not in self.tags_cache:
                 tag_obj = self.builder.create_tag(tag_str)
                 self.entities_to_export.append(tag_obj)
-                self.tags_cache[tag_str] = tag_obj['id']
+                self.tags_cache[tag_str] = tag_obj.id
             
             tag_id = self.tags_cache[tag_str]
-            assoc = self.builder.create_tag_association(tag_id=tag_id, note_id=note['id'])
+            assoc = self.builder.create_tag_association(tag_id=tag_id, note_id=note.id)
             self.entities_to_export.append(assoc)
 
-    def _write_jex_file(self, output_filename: str, entites: List[Dict[str, Any]]):
+    def _write_jex_file(self, output_filename: str, entites: List[Any]):
         """
         Writes the entity list to a .jex tarball.
         """
@@ -223,7 +226,10 @@ class JoplinExporter(BaseExporter):
         with tarfile.open(output_filename, "w:") as tar:
             tar.format = tarfile.USTAR_FORMAT
             
-            for entity in entites:
+            for entity_obj in entites:
+                # Convert Dataclass to Dict for serialization
+                entity = entity_obj.to_dict()
+                
                 file_name = f"{entity['id']}.md"
                 content = self._create_entity_content(entity)
                 
@@ -253,11 +259,17 @@ class JoplinExporter(BaseExporter):
         for key, value in entity.items():
             if key in special_keys:
                 continue
+            # Handle Enum serialization if present
+            if isinstance(value, JoplinEntityType):
+                value = value.value
             parts.append(f"{key}: {value}\n")
             
         # 4. Type (Last)
         if 'type_' in entity:
-            parts.append(f"type_: {entity['type_']}")
+            t_val = entity['type_']
+            if isinstance(t_val, JoplinEntityType):
+                t_val = t_val.value
+            parts.append(f"type_: {t_val}")
             
         return "".join(parts)
 
