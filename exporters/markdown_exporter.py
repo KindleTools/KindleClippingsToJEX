@@ -113,12 +113,11 @@ class MarkdownExporter(BaseExporter):
         yaml_block = f"""---
 book: "{title}"
 author: "{author}"
-type: "{clipping.type}"
 date: {date_iso}
 page: "{page_val}"
-location: "{clipping.location}"
 tags: {tags_list}
 source: "kindle"
+generator: "KindleClippingsToJEX v0.2.0"
 ---"""
         
         return f"{yaml_block}\n\n{clipping.content}\n"

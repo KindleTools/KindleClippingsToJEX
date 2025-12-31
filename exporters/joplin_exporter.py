@@ -87,7 +87,7 @@ class JoplinEntityBuilder:
             altitude=altitude,
             author=author,
             source='kindle-to-jex',
-            source_application='kindle',
+            source_application='KindleClippingsToJEX v0.2.0',
             is_todo=0,
             markup_language=1
         )
@@ -246,6 +246,7 @@ class JoplinExporter(BaseExporter):
                 tar.addfile(tar_info, file_obj)
 
     def _create_entity_content(self, entity: Dict[str, Any]) -> str:
+        # Optimized with f-strings for cleaner serialization
         parts = []
         
         # 1. Title (Header)
@@ -257,23 +258,32 @@ class JoplinExporter(BaseExporter):
             parts.append(f"{entity['body']}\n\n")
             
         # 3. Properties
-        special_keys = ['title', 'body', 'type_']
-        for key, value in entity.items():
-            if key in special_keys:
-                continue
-            # Handle Enum serialization if present
-            if isinstance(value, JoplinEntityType):
-                value = value.value
-            parts.append(f"{key}: {value}\n")
+        special_keys = {'title', 'body', 'type_'}
+        
+        # Helper for value normalization
+        def normalize_val(v):
+            return v.value if isinstance(v, JoplinEntityType) else v
+
+        # Using list comprehension + join is often faster and cleaner
+        props = [
+            f"{key}: {normalize_val(value)}" 
+            for key, value in entity.items() 
+            if key not in special_keys
+        ]
+        parts.extend(props)
             
         # 4. Type (Last)
         if 'type_' in entity:
-            t_val = entity['type_']
-            if isinstance(t_val, JoplinEntityType):
-                t_val = t_val.value
-            parts.append(f"type_: {t_val}")
+            parts.append(f"type_: {normalize_val(entity['type_'])}")
             
-        return "".join(parts)
+        # Ensure final newline
+        if parts and not parts[-1].endswith('\n'):
+             parts.append("")
+
+        return "\n".join(parts)
+
+    # Configurable Layout Constants
+    KINDLE_LOCATION_RATIO = 16.69
 
     def _format_title(self, clip: Clipping) -> str:
         snippet = clip.content[:50].replace('\n', ' ')
@@ -291,13 +301,13 @@ class JoplinExporter(BaseExporter):
         
         # Strategy 2: Heuristic from Location
         # If no valid page found, try calculating from location
-        # Standard heuristic: Location / 16.69 approx = Page
+        # Standard heuristic: Location / RATIO approx = Page
         if page_num == 0 and clip.location:
              clean_loc = clip.location.replace('-', '')
              if clean_loc.isnumeric():
                  try:
                      l_val = int(clip.location.split('-')[0])
-                     page_num = int(l_val / 16.69)
+                     page_num = int(l_val / self.KINDLE_LOCATION_RATIO)
                      # Ensure at least page 1 if location exists
                      if page_num == 0: page_num = 1
                  except ValueError:
@@ -319,8 +329,8 @@ class JoplinExporter(BaseExporter):
             f"- date: {clip.date_time}",
             f"- author: {clip.author}",
             f"- book: {clip.book_title}",
-            f"- page: {clip.page}",
-            f"- location: {clip.location}",
+            f"- page: {clip.page}" if clip.page else None,
+            # location removed as per request (technical field)
             f"- tags: {', '.join(clip.tags)}" if clip.tags else None
         ]
         footer = "\n".join([m for m in meta if m])

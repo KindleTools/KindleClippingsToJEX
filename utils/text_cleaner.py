@@ -27,6 +27,12 @@ class TextCleaner:
         # \u200b is zero-width space
         text = text.replace('\ufeff', '').replace('\u200b', '')
 
+        # 2.5 De-hyphenation (PDF line breaks)
+        # Aggressive cleaning: "word- \n suffix" -> "wordsuffix"
+        # We look for: Word character (LETTERS ONLY), hyphen, optional space, newline, optional space, word character
+        # Regex [^\W\d_] matches Unicode letters (alphanumeric minus digits and underscore)
+        text = re.sub(r'([^\W\d_]+)-\s*\n\s*([^\W\d_]+)', r'\1\2', text)
+        
         # 3. Collapse multiple spaces into one
         text = re.sub(r' +', ' ', text)
 
@@ -35,10 +41,9 @@ class TextCleaner:
         text = re.sub(r'\s+([.,;:!?])', r'\1', text)
 
         # 5. Fix "dash" spacing or broken words (simple heuristics)
-        # Sometimes PDF highlights break words like "amaz- ing" -> "amazing"
-        # This is risky, let's stick to safe hyphenation:
-        # "word - word" -> "word - word" (keep)
-        # "word- word" -> "word - word" (standardize)
+        # "word - word" -> "word - word" (standardize En-dash / Em-dash potentially)
+        # For now, just ensuring single spaces around hyphens that are NOT inside words
+        # (This is tricky to regex safely without NLP, so we'll stick to just cleaning spaces)
         
         # 6. Trim leading/trailing whitespace
         text = text.strip()

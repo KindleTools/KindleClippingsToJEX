@@ -346,23 +346,26 @@ class MainWindow(QMainWindow):
         self.check_duplicates(clippings)
 
         cleaned_titles = stats.get('titles_cleaned', 0)
+        cleaned_pdfs = stats.get('pdfs_cleaned', 0)
 
         # Notify about parsing issues
-        if stats.get('skipped', 0) > 0:
-            skipped = stats['skipped']
+        if stats.get('skipped', 0) > 0 or cleaned_pdfs > 0:
+            skipped = stats.get('skipped', 0)
             total = stats.get('total', '?')
             msg_box = QMessageBox(self)
-            msg_box.setIcon(QMessageBox.Warning)
-            msg_box.setWindowTitle("Parsing Warnings")
+            msg_box.setIcon(QMessageBox.Warning if skipped > 0 else QMessageBox.Information)
+            msg_box.setWindowTitle("Parsing Report")
             
             clean_info = f"✨ Auto-polished {cleaned_titles} book titles.\n" if cleaned_titles > 0 else ""
+            pdf_info = f"🪄 Fixed line-breaks in {cleaned_pdfs} PDF highlights.\n" if cleaned_pdfs > 0 else ""
             
-            msg_box.setText(f"Completed with warnings.\n\n"
+            msg_box.setText(f"Completed with report:\n\n"
                             f"Successfully parsed: {len(clippings)}\n"
                             f"Skipped/Failed blocks: {skipped} (out of {total})\n"
-                            f"{clean_info}\n"
-                            "Some items were skipped due to formatting errors or empty content.\n"
-                            "Click 'Show Details' to see exactly what was ignored.")
+                            f"{clean_info}"
+                            f"{pdf_info}\n"
+                            "Some items might have been skipped or auto-corrected.\n"
+                            "Click 'Show Details' to see exactly what happened.")
             
             # Detailed text (hidden by default, scrollable when expanded)
             detailed_text = ""

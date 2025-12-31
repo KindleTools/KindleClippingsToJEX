@@ -46,11 +46,13 @@ class TestMarkdownExporter(unittest.TestCase):
             self.assertIn('author: "Brandon Sanderson"', content)
             self.assertIn('date: 2023-10-27T12:00:00', content)
             self.assertIn('source: "kindle"', content)
+            self.assertIn('generator: "KindleClippingsToJEX v0.2.0"', content)
             
-            # Verify Removed Fields are ABSENT
+            # Verify Removed Fields are ABSENT (Clean UX)
             self.assertNotIn('created:', content)
             self.assertNotIn('updated:', content)
-            self.assertNotIn('location:', content)
+            self.assertNotIn('location:', content) # Technical field removed
+            self.assertNotIn('type:', content)     # Technical field removed
             self.assertNotIn('creator:', content)
             self.assertNotIn('geo_lat:', content)
             self.assertNotIn('geo_lon:', content)

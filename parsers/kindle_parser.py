@@ -7,8 +7,8 @@ from typing import List, Dict, Optional, Tuple
 from domain.models import Clipping
 from parsers.patterns import DEFAULT_PATTERNS
 from utils.text_cleaner import TextCleaner
-
 from utils.title_cleaner import TitleCleaner
+from services.identity_service import IdentityService
 
 logger = logging.getLogger("KindleToJex.Parser")
 
@@ -20,7 +20,7 @@ class KindleClippingsParser:
         self.separator = separator
         self.language_code = language_code
         self._load_language_patterns()
-        self.stats = {'total': 0, 'parsed': 0, 'skipped': 0, 'failed_blocks': []}
+        self.stats = {'total': 0, 'parsed': 0, 'skipped': 0, 'failed_blocks': [], 'titles_cleaned': 0, 'title_changes': []}
 
     def _load_language_patterns(self):
         """Loads regex patterns from languages.json based on configured language."""
@@ -86,13 +86,12 @@ class KindleClippingsParser:
         Parses parsing with robust encoding handling.
         """
         logger.info(f"Parsing file: {file_path}")
-        self.stats = {'total': 0, 'parsed': 0, 'skipped': 0, 'failed_blocks': [], 'titles_cleaned': 0, 'title_changes': []}
+        self.stats = {'total': 0, 'parsed': 0, 'skipped': 0, 'failed_blocks': [], 'titles_cleaned': 0, 'title_changes': [], 'pdfs_cleaned': 0}
         
         if not os.path.exists(file_path):
              logger.error(f"File not found: {file_path}")
              return []
 
-        # ... (File reading logic remains same) ...
         # List of encodings to try in order of likelihood
         encodings_to_try = ['utf-8-sig', 'utf-8', 'cp1252', 'latin-1']
         if encoding:
@@ -158,15 +157,16 @@ class KindleClippingsParser:
                     page=data['page'],
                     type='highlight'
                 )
+                
+                # Generate Deterministic ID
+                clipping.uid = IdentityService.generate_id(clipping)
+                
                 parsed_clippings.append(clipping)
             
             elif data['type'] == 'note':
                 notes_data.append(data)
 
         # Pass 2: Link Notes to Highlights (Logic remains same)
-        # ... (rest of logic) ...
-        
-        # Re-using existing linking logic but cleaner return
         self._link_notes_to_highlights(parsed_clippings, notes_data)
 
         logger.info(f"Parsing Stats: {self.stats}")
@@ -264,8 +264,6 @@ class KindleClippingsParser:
         # Line 2: Metadata
         meta_line = lines[meta_index]
         
-        # ... (Rest of parsing uses meta_line) ... 
-
         # Location
         loc_match = re.search(r'(' + self.patterns['location'] + r') (?P<location>[0-9,-]+)', meta_line)
         location = loc_match.group('location') if loc_match else ""
@@ -288,7 +286,14 @@ class KindleClippingsParser:
         content = "\n".join(lines[meta_index+1:])
         
         # Apply strict cleaning to the content
+        original_content = content
         content = TextCleaner.clean_text(content)
+        
+        # Heuristic: If length got shorter by removing "- " pattern, it was likely de-hyphenated
+        # This is a bit rough, but 'clean_text' does more than just de-hyphenate.
+        # A simpler check is if "letter-\n" existed in original but is gone.
+        if re.search(r'[^\W\d_]+-\s*\n\s*[^\W\d_]+', original_content) and not re.search(r'[^\W\d_]+-\s*\n\s*[^\W\d_]+', content):
+             self.stats['pdfs_cleaned'] = self.stats.get('pdfs_cleaned', 0) + 1
 
         return {
             'book': title,
