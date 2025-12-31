@@ -8,22 +8,19 @@ from domain.models import Clipping
 from parsers.patterns import DEFAULT_PATTERNS
 from utils.text_cleaner import TextCleaner
 
+from utils.title_cleaner import TitleCleaner
+
 logger = logging.getLogger("KindleToJex.Parser")
 
 class KindleClippingsParser:
     """
     Parses 'My Clippings.txt' files from Kindle devices.
-    
-    Supports:
-    - Multi-language detection (English, Spanish, etc. via languages.json).
-    - Separation of Highlights and Notes.
-    - Association of Notes to Highlights based on location ranges.
-    - Robust date and location parsing.
     """
     def __init__(self, separator="==========", language_code="es"):
         self.separator = separator
         self.language_code = language_code
         self._load_language_patterns()
+        self.stats = {'total': 0, 'parsed': 0, 'skipped': 0, 'failed_blocks': []}
 
     def _load_language_patterns(self):
         """Loads regex patterns from languages.json based on configured language."""
@@ -81,30 +78,31 @@ class KindleClippingsParser:
         logger.warning("Auto-detection failed. Falling back to 'es'.")
         return 'es'
 
+    def get_stats(self):
+        return self.stats
+
     def parse_file(self, file_path: str, encoding: str = None) -> List[Clipping]:
         """
         Parses parsing with robust encoding handling.
         """
         logger.info(f"Parsing file: {file_path}")
+        self.stats = {'total': 0, 'parsed': 0, 'skipped': 0, 'failed_blocks': [], 'titles_cleaned': 0, 'title_changes': []}
         
         if not os.path.exists(file_path):
              logger.error(f"File not found: {file_path}")
              return []
 
+        # ... (File reading logic remains same) ...
         # List of encodings to try in order of likelihood
         encodings_to_try = ['utf-8-sig', 'utf-8', 'cp1252', 'latin-1']
         if encoding:
-            # If user provided specific encoding, try it first
             encodings_to_try.insert(0, encoding)
             
         content = None
-        used_encoding = None
-
         for enc in encodings_to_try:
             try:
                 with open(file_path, 'r', encoding=enc) as f:
                     content = f.read()
-                used_encoding = enc
                 logger.info(f"Successfully read file using encoding: {enc}")
                 break
             except UnicodeDecodeError:
@@ -117,10 +115,8 @@ class KindleClippingsParser:
             logger.error(f"Failed to decode file {file_path}. Tried encodings: {encodings_to_try}")
             return []
 
-        # Explicit BOM removal (even if handled by encoding, this is a safety net)
         if content.startswith('\ufeff'):
             content = content[1:]
-            logger.debug("BOM detected and removed explicitly.")
         
         raw_clippings = content.split(self.separator)
         
@@ -130,7 +126,7 @@ class KindleClippingsParser:
             if detected_lang in self.available_languages:
                 self.patterns = self.available_languages[detected_lang]
             else:
-                 self.patterns = self.default_patterns # Fallback
+                 self.patterns = self.default_patterns
 
         parsed_clippings: List[Clipping] = []
         notes_data: List[Dict] = []
@@ -140,9 +136,17 @@ class KindleClippingsParser:
             if not raw.strip():
                 continue
             
+            self.stats['total'] += 1
             data = self._parse_single_clipping(raw)
+            
             if not data:
+                self.stats['skipped'] += 1
+                # Store first 50 chars of failed block for debugging
+                snippet = raw.strip().replace('\n', ' ')[:500]
+                self.stats['failed_blocks'].append(snippet)
                 continue
+
+            self.stats['parsed'] += 1
 
             if data['type'] == 'highlight':
                 clipping = Clipping(
@@ -159,13 +163,18 @@ class KindleClippingsParser:
             elif data['type'] == 'note':
                 notes_data.append(data)
 
-        # Pass 2: Link Notes to Highlights
-        # Heuristic: Note location must start within Highlight range (or equal to).
-        # Optimization: Group by Book Title first to reduce search space.
+        # Pass 2: Link Notes to Highlights (Logic remains same)
+        # ... (rest of logic) ...
         
-        # Helper to parse location range
+        # Re-using existing linking logic but cleaner return
+        self._link_notes_to_highlights(parsed_clippings, notes_data)
+
+        logger.info(f"Parsing Stats: {self.stats}")
+        return parsed_clippings
+
+    def _link_notes_to_highlights(self, highlights, notes):
+        # Helper extracted from original monolithic function
         def parse_loc_range(loc_str: str) -> Tuple[int, int]:
-            # "100-200" -> (100, 200); "100" -> (100, 100)
             parts = loc_str.split('-')
             try:
                 s = int(parts[0])
@@ -174,75 +183,88 @@ class KindleClippingsParser:
             except:
                 return -1, -1
 
-        # Build index by book title for fast lookup
         highlights_by_book = {}
-        for clip in parsed_clippings:
+        for clip in highlights:
             if clip.book_title not in highlights_by_book:
                 highlights_by_book[clip.book_title] = []
             highlights_by_book[clip.book_title].append(clip)
 
-        for note in notes_data:
+        for note in notes:
             book_key = note['book']
             if book_key in highlights_by_book:
                 candidates = highlights_by_book[book_key]
                 note_start, _ = parse_loc_range(note['location'])
                 
-                # Find the best candidate
-                # A note matches if its location is inside the highlight range.
                 best_match = None
-                
                 for h in candidates:
                     h_start, h_end = parse_loc_range(h.location)
-                    # Relaxed check: valid if note is within range
-                    # Often notes are at the END, e.g. range 10-20, note at 20.
-                    # Sometimes user adds note later, but location remains attached to anchor.
                     if h_start <= note_start <= h_end:
                          best_match = h
-                         # If we find one, usually that's it. But what if multiple overlap?
-                         # Usually we want the smallest enclosing one? Or the most recent?
-                         # For now, finding ANY match is better than exact match failure.
                          break 
                 
                 if best_match:
-                    # Append tags
                     raw_tags = re.split(r'[.,;\n\r]', note['content'])
                     for raw_tag in raw_tags:
                         tag_text = raw_tag.strip()
                         if not tag_text: continue
                         if not tag_text[0].isalnum(): tag_text = tag_text[1:].strip()
-                        
                         if tag_text and tag_text not in best_match.tags:
                             best_match.tags.append(tag_text)
-                else:
-                    logger.debug(f"Orphaned note at {note['location']} for book '{book_key}'. No matching highlight coverage.")
-
-        logger.info(f"Successfully parsed {len(parsed_clippings)} clippings.")
-        return parsed_clippings
 
     def _parse_single_clipping(self, raw_text: str) -> Optional[Dict]:
         lines = [l for l in raw_text.splitlines() if l.strip()]
         if len(lines) < 3:
             return None
 
-        # Line 1: Book Title
-        match_book = re.match(r'(?P<title>.*)\((?P<author>.*)\)', lines[0])
+        # Robust Header Parsing:
+        # Sometimes the title/author line is split across multiple lines or is just very long.
+        # We search for the "Metadata Line" (starts with "- Your Highlight...", "- La nota...", etc.)
+        # and treat everything before it as the Header.
+        
+        meta_index = -1
+        c_type = ""
+        
+        for i in range(1, len(lines)): # Start checking from 2nd line
+            line = lines[i]
+            if re.search(self.patterns['highlight'], line):
+                c_type = 'highlight'
+                meta_index = i
+                break
+            elif re.search(self.patterns['note'], line):
+                c_type = 'note'
+                meta_index = i
+                break
+        
+        if meta_index == -1:
+            # Metadata pattern not found, might be a corrupted block
+            return None
+
+        # Header is everything before meta_index
+        header_lines = lines[:meta_index]
+        full_header = " ".join(header_lines).replace('\n', ' ').strip()
+        
+        # Line 1: Book Title Parsing using the combined header
+        match_book = re.match(r'(?P<title>.*)\((?P<author>.*)\)', full_header)
         if match_book:
             title = match_book.group('title').strip()
             author = match_book.group('author').strip()
         else:
-            title = lines[0].strip()
+            title = full_header.strip()
             author = "Unknown"
+        
+        # Apply title hygiene
+        original_title = title
+        title = TitleCleaner.clean_title(title)
+        if title != original_title:
+            self.stats['titles_cleaned'] = self.stats.get('titles_cleaned', 0) + 1
+            change = (original_title, title)
+            if change not in self.stats['title_changes']:
+                self.stats['title_changes'].append(change)
 
         # Line 2: Metadata
-        meta_line = lines[1]
+        meta_line = lines[meta_index]
         
-        # Type detection using loaded patterns
-        if re.search(self.patterns['highlight'], meta_line):
-            c_type = 'highlight'
-        elif re.search(self.patterns['note'], meta_line):
-            c_type = 'note'
-        else:
-            return None 
+        # ... (Rest of parsing uses meta_line) ... 
 
         # Location
         loc_match = re.search(r'(' + self.patterns['location'] + r') (?P<location>[0-9,-]+)', meta_line)
@@ -263,7 +285,7 @@ class KindleClippingsParser:
             # Fallback if specific pattern fails, try parsing the whole line end or just give up gracefully
             date_obj = None
 
-        content = "\n".join(lines[2:])
+        content = "\n".join(lines[meta_index+1:])
         
         # Apply strict cleaning to the content
         content = TextCleaner.clean_text(content)

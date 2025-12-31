@@ -335,7 +335,7 @@ class MainWindow(QMainWindow):
 
 
 
-    def on_load_finished(self, clippings):
+    def on_load_finished(self, clippings, stats):
         self.progress.close()
         self.clippings = clippings
         self.table.populate(self.clippings)
@@ -344,6 +344,50 @@ class MainWindow(QMainWindow):
         self.update_stats_label(len(clippings))
         self.update_insight_stats(clippings)
         self.check_duplicates(clippings)
+
+        cleaned_titles = stats.get('titles_cleaned', 0)
+
+        # Notify about parsing issues
+        if stats.get('skipped', 0) > 0:
+            skipped = stats['skipped']
+            total = stats.get('total', '?')
+            msg_box = QMessageBox(self)
+            msg_box.setIcon(QMessageBox.Warning)
+            msg_box.setWindowTitle("Parsing Warnings")
+            
+            clean_info = f"✨ Auto-polished {cleaned_titles} book titles.\n" if cleaned_titles > 0 else ""
+            
+            msg_box.setText(f"Completed with warnings.\n\n"
+                            f"Successfully parsed: {len(clippings)}\n"
+                            f"Skipped/Failed blocks: {skipped} (out of {total})\n"
+                            f"{clean_info}\n"
+                            "Some items were skipped due to formatting errors or empty content.\n"
+                            "Click 'Show Details' to see exactly what was ignored.")
+            
+            # Detailed text (hidden by default, scrollable when expanded)
+            detailed_text = ""
+            
+            if 'failed_blocks' in stats and stats['failed_blocks']:
+                detailed_text += "--- SKIPPED CONTENT BLOCKS ---\n\n"
+                for i, ex in enumerate(stats['failed_blocks'], 1):
+                    detailed_text += f"[Block #{i}]\n{ex}\n" + "-"*40 + "\n"
+                detailed_text += "\n"
+            
+            if 'title_changes' in stats and stats['title_changes']:
+                detailed_text += "--- POLISHED TITLES ---\n\n"
+                for i, (old, new) in enumerate(stats['title_changes'], 1):
+                    detailed_text += f"{i}. {old}\n   ↳ {new}\n\n"
+
+            if detailed_text:
+                msg_box.setDetailedText(detailed_text)
+            
+            msg_box.exec_()
+        else:
+            # Happy path notification
+            msg = f"✅ Loaded {len(clippings)} clippings"
+            if cleaned_titles > 0:
+                msg += f" ({cleaned_titles} titles polished)"
+            self.status_message.emit(msg, 5000)
 
     def check_duplicates(self, clippings):
         """Checks for duplicates and updates the Cleanup button."""
@@ -371,10 +415,12 @@ class MainWindow(QMainWindow):
 
     def on_load_error(self, error_msg):
         self.progress.close()
+        logging.getLogger("KindleToJex.MainWindow").error(f"Load error: {error_msg}")
         QMessageBox.critical(self, "Error", f"Error reading file:\n{error_msg}")
 
     def on_export_error(self, message):
         """Standardized error handler for export thread."""
+        logging.getLogger("KindleToJex.MainWindow").error(f"Export error: {message}")
         QMessageBox.critical(self, "Export Error", f"An error occurred during export:\n\n{message}")
 
     # --- Drag and Drop Events ---
@@ -500,23 +546,6 @@ class MainWindow(QMainWindow):
         self.progress.close()
         QMessageBox.critical(self, "Error", msg)
 
-    def dragEnterEvent(self, event):
-        """Handle file drag enter events."""
-        if event.mimeData().hasUrls():
-            # Accept if at least one file is a text file
-            for url in event.mimeData().urls():
-                if url.toLocalFile().lower().endswith('.txt'):
-                    event.acceptProposedAction()
-                    return
-        event.ignore()
-
-    def dropEvent(self, event):
-        """Handle file drop events."""
-        for url in event.mimeData().urls():
-            file_path = url.toLocalFile()
-            if os.path.exists(file_path) and file_path.lower().endswith('.txt'):
-                self.load_file(file_path)
-                break
 
     def apply_styles(self):
         """Applies global CSS styles based on current theme."""

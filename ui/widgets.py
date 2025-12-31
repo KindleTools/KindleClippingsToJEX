@@ -425,7 +425,28 @@ class ClippingsTableWidget(QTableWidget):
         
         if rows_to_delete:
             from PyQt5.QtWidgets import QMessageBox
-            reply = QMessageBox.question(self, "Cleanup", f"Delete {len(rows_to_delete)} duplicate/redundant highlights?", QMessageBox.Yes | QMessageBox.No)
+            
+            # Prepare detail report
+            details_list = []
+            for r in rows_to_delete:
+                clip = self.item(r, 0).data(Qt.UserRole)
+                snippet = clip.content[:300].replace('\n', ' ') + "..." if len(clip.content) > 300 else clip.content
+                details_list.append(f"[{clip.type.upper()}] {clip.book_title}\n{snippet}\n")
+            
+            detailed_text = "--- ITEMS TO BE REMOVED ---\n\n" + "\n".join(details_list)
+
+            msg_box = QMessageBox(self)
+            msg_box.setWindowTitle("Cleanup Confirmation")
+            msg_box.setIcon(QMessageBox.Question)
+            msg_box.setText(f"Found {len(rows_to_delete)} duplicate or redundant items.\n\n"
+                            "These are either exact duplicates, subsets of other highlights, or empty noise.\n"
+                            "Do you want to delete them all?")
+            msg_box.setDetailedText(detailed_text)
+            msg_box.setStandardButtons(QMessageBox.Yes | QMessageBox.No)
+            msg_box.setDefaultButton(QMessageBox.Yes)
+            
+            reply = msg_box.exec_()
+            
             if reply == QMessageBox.Yes:
                 self.delete_rows(rows_to_delete)
                 return len(rows_to_delete)
@@ -511,7 +532,7 @@ class ClippingsTableWidget(QTableWidget):
             new_tags_str = item_tags.text().strip() if item_tags else ""
             # Parse tags back to set - Support comma and semicolon as separators in UI
             import re
-            new_tags = set(t.strip() for t in re.split(r'[,;]', new_tags_str) if t.strip())
+            new_tags = list(set(t.strip() for t in re.split(r'[,;]', new_tags_str) if t.strip()))
 
             # Create final object with ALL edited fields
             final_clip = replace(original_clip, 

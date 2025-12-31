@@ -6,7 +6,7 @@ from services.clippings_service import ClippingsService
 import logging
 
 class LoadFileThread(QThread):
-    finished = pyqtSignal(list)
+    finished = pyqtSignal(list, dict)
     error = pyqtSignal(str)
 
     def __init__(self, file_path: str, language: str):
@@ -18,13 +18,14 @@ class LoadFileThread(QThread):
         try:
             parser = KindleClippingsParser(language_code=self.language)
             clippings = parser.parse_file(self.file_path)
+            stats = parser.get_stats()
             
             # Apply Smart Deduplication on Load
             from services.deduplication_service import SmartDeduplicator
             deduplicator = SmartDeduplicator()
             cleaned_clippings = deduplicator.deduplicate(clippings)
             
-            self.finished.emit(cleaned_clippings)
+            self.finished.emit(cleaned_clippings, stats)
         except Exception as e:
             logging.error(f"Error loading file: {e}", exc_info=True)
             self.error.emit(str(e))

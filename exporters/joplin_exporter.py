@@ -165,6 +165,8 @@ class JoplinExporter(BaseExporter):
         if skipped_dupes > 0:
             logger.info(f"Skipped {skipped_dupes} duplicate items during JEX export.")
 
+        logger.info(f"Exporting JEX archive to: {output_file}")
+
         # 5. Write JAR
         self._write_jex_file(output_file, self.entities_to_export)
     

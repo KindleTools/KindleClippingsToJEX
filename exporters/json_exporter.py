@@ -1,7 +1,10 @@
 import json
+import logging
 from typing import List, Dict, Any
 from domain.models import Clipping
 from exporters.base import BaseExporter
+
+logger = logging.getLogger("KindleToJex.JsonExporter")
 
 class JsonExporter(BaseExporter):
     """
@@ -26,7 +29,7 @@ class JsonExporter(BaseExporter):
                 'date_time': clip.date_time.isoformat() if clip.date_time else None,
                 'page': clip.page,
                 'location': clip.location,
-                'tags': clip.tags,
+                'tags': list(clip.tags),
                 # Include raw boolean indicating if it was flagged as dupe
                 'is_duplicate': clip.is_duplicate,
                 'source': 'kindle'
@@ -53,6 +56,8 @@ class JsonExporter(BaseExporter):
             output_file += '.json'
             
         json_content = self.create_json_string(clippings, context)
+        
+        logger.info(f"Exporting {len(clippings)} clippings to {output_file}...")
         
         try:
             with open(output_file, 'w', encoding='utf-8') as f:

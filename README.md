@@ -51,10 +51,14 @@ Whether you are a casual reader or a power user, this tool ensures your Kindle n
   - **Accidental Highlights**: Flags fragments (< 75 chars) if they start with lowercase or lack punctuation.
 - **Smart Association**: Advanced logic to link notes to highlights even when Kindle places the note at the *end* of a long passage. Instead of exact matching, it uses sophisticated range coverage (Highlight Start ≤ Note Location ≤ Highlight End) to ensure your comments always find their parent text.
 - **Advanced Text Hygiene**: Automatically polishes your highlights to professional standards:
+  - **Title Polishing**: Automatically cleans up book titles by removing clutter like " (Kindle Edition)", "(Spanish Edition)", "[eBook]", etc.
   - **Unicode (NFC) Normalization**: Ensures cross-platform compatibility (Windows/Mac/Linux) for special characters, preventing issues with Obsidian/Joplin search and linking.
   - **Typesetting Cleanup**: Fixes common Kindle issues like double spaces, spaces before punctuation (e.g., `Hello , world`), and capitalization errors.
   - **Invisible Character Removal**: Strips byte-order marks (BOM) and zero-width spaces that often corrupt text searches.
-- **Robust Architecture**: Built with strict Type Handling (Dataclasses) to prevent data corruption during export and ensure 100% compliant JEX files.
+- **Robustness & Transparency**:
+  - **Detailed Error Reporting**: Intelligently skips corrupted blocks and provides a visual report with snippets of exactly what was skipped, ensuring data integrity without silent failures.
+  - **Comprehensive Logging**: Maintains a full audit trail (info, debug, errors) of the process in `app.log` for troubleshooting.
+  - **Strict Typing**: Built with Python Dataclasses to prevent data corruption.
 - **Multi-language Support**: Fully configurable parsing for Kindle devices set to English, Spanish, French, German, Italian, or Portuguese.
 
 ### 🎨 "Zen" Graphical User Interface (New)
@@ -230,16 +234,13 @@ coverage report -m
 ## Future Improvements
 The following features are planned for upcoming releases to further enhance the "Zen" experience:
 
-- **Bulk Tagging**: Add option to apply tags to multiple selected notes at once via the context menu.
-- **Search Book Online**: Context menu option to quickly search for a book's metadata or cover on Goodreads/Google based on the title.
-- **📅 Reading Timeline**: A visual heatmap or bar chart to visualize your reading habits over time (e.g., "When did I read the most?").
-- **🏷️ Tag Cloud & Drag-and-Drop**: A sidebar showing your most used tags. Simply drag a tag onto a note to assign it instantly!
-- **👁️ Markdown Preview**: Toggle between the raw text editor and a rendered Markdown preview to see exactly how your notes will look in Joplin.
-- **🔍 Smart Search**: Advanced filtering capabilities, such as `book:Dune` or `tag:philosophy` for power users.
-- **⚠️ Confidence Indicator**: Visual cues (colors or icons) in the table to clearly highlight rows marked as "duplicates" before you clean them.
-- **🔔 Update Checker**: Automatically notify when a new version is available on GitHub.
-- **⌨️ Global Shortcuts**: Add keyboard shortcuts (Ctrl+O, Ctrl+Q) for faster navigation.
-- **ℹ️ About Dialog**: A dedicated screen with version info, credits, and license details.
+- **🔌 Direct Joplin Sync**: Button to send notes directly to the running Joplin app via its local API (Port 41184), skipping the file import step.
+- **👁️ "New Only" Filter**: Checkbox to toggle between showing "All History" and "New Clippings Only" (since last import).
+- **🪟 State Persistence**: Remember window size, position, and column widths between sessions.
+- **📅 Reading Timeline**: A visual heatmap or bar chart to visualize your reading habits over time.
+- **Tag Cloud & Drag-and-Drop**: Sidebar with most used tags for quick assignment.
+- **Smart Search**: Advanced filtering like `book:Dune` or `tag:philosophy`.
+- **Global Shortcuts**: Keyboard shortcuts (Ctrl+O, Ctrl+S) for power users.
 
 ## 💡 Troubleshooting
 

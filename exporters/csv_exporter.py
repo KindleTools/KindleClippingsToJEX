@@ -1,7 +1,10 @@
 import csv
+import logging
 from typing import List, Dict, Any
 from domain.models import Clipping
 from exporters.base import BaseExporter
+
+logger = logging.getLogger("KindleToJex.CsvExporter")
 
 class CsvExporter(BaseExporter):
     """
@@ -17,6 +20,7 @@ class CsvExporter(BaseExporter):
         output = io.StringIO()
         fieldnames = ['book_title', 'author', 'content', 'type', 'date_time', 'page', 'location', 'tags', 'is_duplicate', 'source']
         writer = csv.DictWriter(output, fieldnames=fieldnames)
+        # Manually write header to avoid potential issues with DictWriter in older pythons (though 3.8+ is fine)
         writer.writeheader()
         
         for clipping in clippings:
@@ -45,6 +49,8 @@ class CsvExporter(BaseExporter):
             output_file += '.csv'
             
         csv_content = self.create_csv_string(clippings)
+        
+        logger.info(f"Exporting {len(clippings)} clippings to CSV: {output_file}")
         
         try:
             with open(output_file, 'w', newline='', encoding='utf-8-sig') as f:
