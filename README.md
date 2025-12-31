@@ -225,10 +225,7 @@ To set up the development environment:
 ```bash
 # Install development dependencies
 pip install -r requirements.txt
-pip install pre-commit mypy ruff coverage
-
-# Install pre-commit hooks
-pre-commit install
+pip install mypy ruff coverage
 ```
 
 Run quality checks manually:

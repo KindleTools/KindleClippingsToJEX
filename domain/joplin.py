@@ -1,6 +1,7 @@
 from dataclasses import dataclass, asdict
 from enum import IntEnum
 
+
 class JoplinEntityType(IntEnum):
     NOTE = 1
     FOLDER = 2
@@ -18,6 +19,7 @@ class JoplinEntityType(IntEnum):
     MIGRATION = 14
     SMART_FILTER = 15
 
+
 @dataclass
 class JoplinEntity:
     id: str = ""
@@ -32,11 +34,13 @@ class JoplinEntity:
     def to_dict(self):
         return {k: v for k, v in asdict(self).items() if v is not None}
 
+
 @dataclass
 class JoplinNotebook(JoplinEntity):
     title: str = ""
     parent_id: str = ""
     type_: JoplinEntityType = JoplinEntityType.FOLDER
+
 
 @dataclass
 class JoplinNote(JoplinEntity):
@@ -54,11 +58,13 @@ class JoplinNote(JoplinEntity):
     markup_language: int = 1
     type_: JoplinEntityType = JoplinEntityType.NOTE
 
+
 @dataclass
 class JoplinTag(JoplinEntity):
     title: str = ""
     type_: JoplinEntityType = JoplinEntityType.TAG
     parent_id: str = ""
+
 
 @dataclass
 class JoplinTagAssociation(JoplinEntity):

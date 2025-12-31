@@ -3,6 +3,7 @@ from datetime import datetime
 from exporters.joplin_exporter import JoplinEntityBuilder
 from domain.joplin import JoplinEntityType
 
+
 class TestJoplinEntityBuilder(unittest.TestCase):
     def test_create_notebook(self):
         notebook = JoplinEntityBuilder.create_notebook("My Notebook")
@@ -14,13 +15,9 @@ class TestJoplinEntityBuilder(unittest.TestCase):
     def test_create_note(self):
         dt = datetime(2023, 1, 1, 12, 0, 0)
         note = JoplinEntityBuilder.create_note(
-            title="My Note", 
-            body="# Content", 
-            parent_id="notebook_id",
-            created_time=dt,
-            author="Me"
+            title="My Note", body="# Content", parent_id="notebook_id", created_time=dt, author="Me"
         )
-        
+
         self.assertEqual(note.title, "My Note")
         self.assertEqual(note.body, "# Content")
         self.assertEqual(note.parent_id, "notebook_id")
@@ -33,12 +30,13 @@ class TestJoplinEntityBuilder(unittest.TestCase):
         tag = JoplinEntityBuilder.create_tag("important")
         self.assertEqual(tag.title, "important")
         self.assertEqual(tag.type_, JoplinEntityType.TAG)
-        
+
     def test_create_tag_association(self):
         assoc = JoplinEntityBuilder.create_tag_association("tag1", "note1")
         self.assertEqual(assoc.tag_id, "tag1")
         self.assertEqual(assoc.note_id, "note1")
         self.assertEqual(assoc.type_, JoplinEntityType.NOTE_TAG)
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

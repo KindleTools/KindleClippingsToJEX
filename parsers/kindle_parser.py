@@ -198,17 +198,17 @@ class KindleClippingsParser:
         logger.info(f"Parsing Stats: {self.stats}")
         return parsed_clippings
 
-    def _link_notes_to_highlights(self, highlights, notes):
-        # Helper extracted from original monolithic function
-        def parse_loc_range(loc_str: str) -> Tuple[int, int]:
-            parts = loc_str.split("-")
-            try:
-                s = int(parts[0])
-                e = int(parts[1]) if len(parts) > 1 else s
-                return s, e
-            except Exception:
-                return -1, -1
+    @staticmethod
+    def _parse_loc_range(loc_str: str) -> Tuple[int, int]:
+        parts = loc_str.split("-")
+        try:
+            s = int(parts[0])
+            e = int(parts[1]) if len(parts) > 1 else s
+            return s, e
+        except Exception:
+            return -1, -1
 
+    def _link_notes_to_highlights(self, highlights, notes):
         highlights_by_book: Dict[str, List[Clipping]] = {}
         for clip in highlights:
             if clip.book_title not in highlights_by_book:
@@ -219,11 +219,11 @@ class KindleClippingsParser:
             book_key = note["book"]
             if book_key in highlights_by_book:
                 candidates = highlights_by_book[book_key]
-                note_start, _ = parse_loc_range(note["location"])
+                note_start, _ = self._parse_loc_range(note["location"])
 
                 best_match = None
                 for h in candidates:
-                    h_start, h_end = parse_loc_range(h.location)
+                    h_start, h_end = self._parse_loc_range(h.location)
                     if h_start <= note_start <= h_end:
                         best_match = h
                         break

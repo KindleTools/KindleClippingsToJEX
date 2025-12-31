@@ -5,11 +5,13 @@ from typing import Dict, Any
 
 logger = logging.getLogger("KindleToJex.Config")
 
+
 class ConfigManager:
     """
     Manages application configuration, unifying CLI and GUI keys.
     Follows structure of config.sample.json.
     """
+
     DEFAULT_CONFIG = {
         "creator": "System",
         "location": [0.0, 0.0, 0],
@@ -17,7 +19,7 @@ class ConfigManager:
         "input_file": "",
         "output_file": "import_clippings",
         "language": "auto",
-        "theme": "light"
+        "theme": "light",
     }
 
     def __init__(self, config_dir: str = "config", config_filename: str = "config.json"):
@@ -25,15 +27,15 @@ class ConfigManager:
         self.config_filename = config_filename
         self.config_path = os.path.join(self.config_dir, self.config_filename)
         self._config_data: Dict[str, Any] = self.DEFAULT_CONFIG.copy()
-        
+
         # Determine project root for relative path resolution
-        self.project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), '..'))
-        
+        self.project_root = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
+
         self._load()
 
     def get_resource_path(self, filename: str) -> str:
         """Returns the absolute path to a resource file."""
-        return os.path.join(self.project_root, 'resources', filename)
+        return os.path.join(self.project_root, "resources", filename)
 
     def _ensure_dir(self):
         """Ensures the configuration directory exists."""
@@ -50,7 +52,7 @@ class ConfigManager:
             return
 
         try:
-            with open(self.config_path, 'r', encoding='utf-8') as f:
+            with open(self.config_path, "r", encoding="utf-8") as f:
                 loaded_data = json.load(f)
                 # Merge defaults with loaded data to ensure all keys exist
                 self._config_data.update(loaded_data)
@@ -62,7 +64,7 @@ class ConfigManager:
         """Saves the current configuration to file."""
         self._ensure_dir()
         try:
-            with open(self.config_path, 'w', encoding='utf-8') as f:
+            with open(self.config_path, "w", encoding="utf-8") as f:
                 json.dump(self._config_data, f, indent=4, ensure_ascii=False)
             logger.info("Configuration saved.")
         except OSError as e:
@@ -77,8 +79,10 @@ class ConfigManager:
         self._config_data[key] = value
         self.save()
 
+
 # Global singleton-like instance for easy access
 _global_manager = None
+
 
 def get_config_manager() -> ConfigManager:
     global _global_manager

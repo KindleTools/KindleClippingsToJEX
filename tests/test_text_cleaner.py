@@ -1,8 +1,8 @@
 import unittest
 from utils.text_cleaner import TextCleaner
 
+
 class TestTextCleaner(unittest.TestCase):
-    
     def test_basic_cleaning(self):
         # Double spaces
         self.assertEqual(TextCleaner.clean_text("Hello  World"), "Hello World")
@@ -19,24 +19,24 @@ class TestTextCleaner(unittest.TestCase):
         # Lowercase start
         self.assertEqual(TextCleaner.clean_text("hello world"), "Hello world")
         # Already capitalized
-        # Dots/ellipsis should be ignored/preserved? 
+        # Dots/ellipsis should be ignored/preserved?
         # The logic says: if starts with ... don't capitalize
         self.assertEqual(TextCleaner.clean_text("...and then"), "...and then")
 
     def test_invisible_chars(self):
         # Zero width space
         self.assertEqual(TextCleaner.clean_text("H\u200bello"), "Hello")
-    
+
     def test_unicode_normalization(self):
         # NFD (Decomposed: n + ~) should become NFC (Composed: ñ) AND be capitalized
-        nfd_str = "n\u0303" # n + combining tilde = ñ (lowercase)
-        nfc_str_capitalized = "\u00d1" # Ñ (Capitalized NFC)
-        
+        nfd_str = "n\u0303"  # n + combining tilde = ñ (lowercase)
+        nfc_str_capitalized = "\u00d1"  # Ñ (Capitalized NFC)
+
         cleaned = TextCleaner.clean_text(nfd_str)
-        
+
         # It should match the Capitalized NFC version
         self.assertEqual(cleaned, nfc_str_capitalized)
-        
+
         # Verify basic normalization logic (lowercase match)
         self.assertEqual(cleaned.lower(), "\u00f1")
 
@@ -44,5 +44,6 @@ class TestTextCleaner(unittest.TestCase):
         self.assertEqual(TextCleaner.clean_text(None), "")
         self.assertEqual(TextCleaner.clean_text(""), "")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

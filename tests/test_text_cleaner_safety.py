@@ -1,6 +1,7 @@
 import unittest
 from utils.text_cleaner import TextCleaner
 
+
 class TestTextCleanerSafety(unittest.TestCase):
     """
     Safety tests for TextCleaner de-hyphenation logic to ensure no false positives.
@@ -25,14 +26,14 @@ class TestTextCleanerSafety(unittest.TestCase):
         # "word - \n word" -> SHOULD NOT JOIN into "wordword"
         # The regex requires ([^\W\d_]+)- so no space allowed before hyphen.
         raw = "This is a pause - \n for effect."
-        expected = "This is a pause - \n for effect." # Newline preserved, dash preserved
+        expected = "This is a pause - \n for effect."  # Newline preserved, dash preserved
         self.assertEqual(TextCleaner.clean_text(raw), expected)
 
     def test_safety_numeric_range(self):
         # Case 4: Numeric ranges split by newline (False Positive Check)
         # "1990-\n1991" -> SHOULD NOT JOIN into "19901991"
         raw = "The years 1990-\n1991 were great."
-        expected = "The years 1990-\n1991 were great." # Newline preserved, range preserved
+        expected = "The years 1990-\n1991 were great."  # Newline preserved, range preserved
         # Implementation using [^\\W\\d_]+ should ensure this.
         self.assertEqual(TextCleaner.clean_text(raw), expected)
 
@@ -43,5 +44,6 @@ class TestTextCleanerSafety(unittest.TestCase):
         # Ideally "well-known", but "wellknown" is better than "well- known"
         pass
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     unittest.main()

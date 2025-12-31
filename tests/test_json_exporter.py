@@ -5,6 +5,7 @@ from datetime import datetime
 from domain.models import Clipping
 from exporters.json_exporter import JsonExporter
 
+
 class TestJsonExporter(unittest.TestCase):
     def setUp(self):
         self.exporter = JsonExporter()
@@ -19,7 +20,7 @@ class TestJsonExporter(unittest.TestCase):
                 location="100",
                 page="10",
                 tags=["tag1"],
-                entry_type="highlight"
+                entry_type="highlight",
             )
         ]
 
@@ -33,21 +34,22 @@ class TestJsonExporter(unittest.TestCase):
 
     def test_json_content_structure(self):
         self.exporter.export(self.clippings, self.test_file, self.context)
-        
-        with open(self.test_file, 'r', encoding='utf-8') as f:
-            data = json.load(f)
-            
-            # Check Meta
-            self.assertEqual(data['meta']['count'], 1)
-            self.assertEqual(data['meta']['creator'], "Test User")
-            self.assertEqual(data['meta']['source'], "KindleClippingsToJEX")
-            
-            # Check List
-            self.assertIsInstance(data['clippings'], list)
-            item = data['clippings'][0]
-            self.assertEqual(item['content'], "Json content")
-            self.assertEqual(item['book_title'], "Test Book")
-            self.assertEqual(item['tags'], ["tag1"])
 
-if __name__ == '__main__':
+        with open(self.test_file, "r", encoding="utf-8") as f:
+            data = json.load(f)
+
+            # Check Meta
+            self.assertEqual(data["meta"]["count"], 1)
+            self.assertEqual(data["meta"]["creator"], "Test User")
+            self.assertEqual(data["meta"]["source"], "KindleClippingsToJEX")
+
+            # Check List
+            self.assertIsInstance(data["clippings"], list)
+            item = data["clippings"][0]
+            self.assertEqual(item["content"], "Json content")
+            self.assertEqual(item["book_title"], "Test Book")
+            self.assertEqual(item["tags"], ["tag1"])
+
+
+if __name__ == "__main__":
     unittest.main()

@@ -5,6 +5,7 @@ from parsers.kindle_parser import KindleClippingsParser
 from services.clippings_service import ClippingsService
 import logging
 
+
 class LoadFileThread(QThread):
     finished = pyqtSignal(list, dict)
     error = pyqtSignal(str)
@@ -19,25 +20,33 @@ class LoadFileThread(QThread):
             parser = KindleClippingsParser(language_code=self.language)
             clippings = parser.parse_file(self.file_path)
             stats = parser.get_stats()
-            
+
             # Apply Smart Deduplication on Load
             from services.deduplication_service import SmartDeduplicator
+
             deduplicator = SmartDeduplicator()
             cleaned_clippings = deduplicator.deduplicate(clippings)
-            
+
             self.finished.emit(cleaned_clippings, stats)
         except Exception as e:
             logging.error(f"Error loading file: {e}", exc_info=True)
             self.error.emit(str(e))
 
+
 class ExportThread(QThread):
     finished = pyqtSignal(int)
     error = pyqtSignal(str)
 
-    def __init__(self, service: ClippingsService, clippings: List[Clipping], 
-                 output_file: str, root_notebook: str, 
-                 location: Tuple[float, float, int], creator: str,
-                 export_format: str = 'jex'):
+    def __init__(
+        self,
+        service: ClippingsService,
+        clippings: List[Clipping],
+        output_file: str,
+        root_notebook: str,
+        location: Tuple[float, float, int],
+        creator: str,
+        export_format: str = "jex",
+    ):
         super().__init__()
         self.service = service
         self.clippings = clippings
@@ -55,7 +64,7 @@ class ExportThread(QThread):
                 root_notebook_name=self.root_notebook,
                 location=self.location,
                 creator_name=self.creator,
-                export_format=self.export_format
+                export_format=self.export_format,
             )
             self.finished.emit(len(self.clippings))
         except Exception as e:
