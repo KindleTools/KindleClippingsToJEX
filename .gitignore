@@ -47,7 +47,7 @@ coverage.xml
 
 # PyInstaller
 *.manifest
-*.spec
+
 
 # --- IDEs & OS ---
 # JetBrains / VSCode

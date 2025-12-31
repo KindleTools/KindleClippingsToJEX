@@ -48,25 +48,12 @@ jobs:
         run: |
           python utils/convert_icon.py
 
+
       - name: Build with PyInstaller
-        # Note: Separator is ';' for Windows, ':' for Unix
         run: |
-          if [ "$RUNNER_OS" == "Windows" ]; then
-            sep=";"
-            icon="resources/icon.ico"
-          else
-            sep=":"
-            icon="resources/icon.png"
-          fi
-          
-          pyinstaller --clean --noconsole --onefile \
-            --name "KindleToJEX" \
-            --icon "$icon" \
-            --paths "." \
-            --collect-all "dateparser" \
-            --add-data "resources${sep}resources" \
-            main.py
+          pyinstaller --clean --noconfirm KindleToJEX.spec
         shell: bash
+
 
       - name: Upload to Release
         uses: softprops/action-gh-release@v1
