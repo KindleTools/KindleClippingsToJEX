@@ -1,6 +1,5 @@
 import unittest
 from unittest.mock import MagicMock
-from datetime import datetime
 from services.clippings_service import ClippingsService
 from domain.models import Clipping
 

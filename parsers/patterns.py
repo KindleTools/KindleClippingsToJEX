@@ -2,7 +2,6 @@
 Default Regex patterns for Kindle clippings parsing.
 Separated from logic to allow easier updates and multi-language extensions.
 """
-import re
 
 DEFAULT_PATTERNS = {
     # Variations of "Highlight"

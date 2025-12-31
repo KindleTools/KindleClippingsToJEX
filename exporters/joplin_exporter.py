@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from typing import Dict, Any, List, Tuple, Optional
 from domain.models import Clipping
 from domain.constants import GENERATOR_STRING
-from domain.joplin import JoplinNotebook, JoplinNote, JoplinTag, JoplinTagAssociation, JoplinEntityType
+from domain.joplin import JoplinNotebook, JoplinNote, JoplinTag, JoplinTagAssociation
 from exporters.base import BaseExporter
 
 logger = logging.getLogger("KindleToJex.JoplinExporter")

@@ -2,10 +2,7 @@ import unittest
 import os
 import shutil
 import tempfile
-from unittest.mock import patch, MagicMock
 from services.clippings_service import ClippingsService
-from domain.models import Clipping
-from datetime import datetime
 
 class TestIntegration(unittest.TestCase):
     def setUp(self):

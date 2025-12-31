@@ -1,6 +1,5 @@
 import hashlib
 import logging
-from typing import List, Dict, Any
 from domain.models import Clipping
 
 logger = logging.getLogger("KindleToJex.IdentityService")

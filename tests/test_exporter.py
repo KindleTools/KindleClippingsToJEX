@@ -1,6 +1,7 @@
 import unittest
 from datetime import datetime
-from exporters.joplin_exporter import JoplinEntityBuilder, JoplinEntityType
+from exporters.joplin_exporter import JoplinEntityBuilder
+from domain.joplin import JoplinEntityType
 
 class TestJoplinEntityBuilder(unittest.TestCase):
     def test_create_notebook(self):

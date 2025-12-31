@@ -37,8 +37,10 @@ class KindleClippingsParser:
         if self.language_file:
             lang_file = self.language_file
         else:
-            # Fallback if no file provided (e.g. in simple tests)
-            lang_file = "languages.json"
+            # Fallback if no file provided (try resources/languages.json)
+            # We assume 'resources' is at the project root level relative to execution or package
+            base_dir = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+            lang_file = os.path.join(base_dir, "resources", "languages.json")
 
         # Default fallback patterns (Spanish)
         # Use imported constant as default
@@ -204,7 +206,7 @@ class KindleClippingsParser:
                 s = int(parts[0])
                 e = int(parts[1]) if len(parts) > 1 else s
                 return s, e
-            except:
+            except Exception:
                 return -1, -1
 
         highlights_by_book: Dict[str, List[Clipping]] = {}
@@ -238,7 +240,7 @@ class KindleClippingsParser:
                             best_match.tags.append(tag_text)
 
     def _parse_single_clipping(self, raw_text: str) -> Optional[Dict]:
-        lines = [l for l in raw_text.splitlines() if l.strip()]
+        lines = [line_str for line_str in raw_text.splitlines() if line_str.strip()]
         if len(lines) < 3:
             return None
 

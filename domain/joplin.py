@@ -1,7 +1,5 @@
-from dataclasses import dataclass, field, asdict
-from typing import Optional
+from dataclasses import dataclass, asdict
 from enum import IntEnum
-from datetime import datetime
 
 class JoplinEntityType(IntEnum):
     NOTE = 1
