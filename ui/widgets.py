@@ -18,7 +18,7 @@ class EmptyStateWidget(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         layout = QVBoxLayout(self)
-        layout.setAlignment(Qt.AlignCenter)
+        layout.setAlignment(Qt.AlignCenter) # type: ignore
         
         self.icon_label = QLabel()
         from utils.config_manager import get_config_manager
@@ -26,31 +26,31 @@ class EmptyStateWidget(QWidget):
         
         icon_path = get_config_manager().get_resource_path('icon.png')
         if os.path.exists(icon_path):
-             pixmap = QPixmap(icon_path).scaled(84, 84, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+             pixmap = QPixmap(icon_path).scaled(84, 84, Qt.KeepAspectRatio, Qt.SmoothTransformation) # type: ignore
              self.icon_label.setPixmap(pixmap)
         else:
              self.icon_label.setText("📚")
              self.icon_label.setStyleSheet("font-size: 64px; margin-bottom: 20px;")
              
-        self.icon_label.setAlignment(Qt.AlignCenter)
+        self.icon_label.setAlignment(Qt.AlignCenter) # type: ignore
         
         self.msg_label = QLabel("Your Kindle library is waiting")
         self.msg_label.setStyleSheet("font-size: 18px; font-weight: bold; color: #333;")
-        self.msg_label.setAlignment(Qt.AlignCenter)
+        self.msg_label.setAlignment(Qt.AlignCenter) # type: ignore
         
         self.sub_label = QLabel("Load your 'My Clippings.txt' file to start organizing your notes.")
         self.sub_label.setStyleSheet("font-size: 14px; color: #666; margin-top: 10px;")
-        self.sub_label.setAlignment(Qt.AlignCenter)
+        self.sub_label.setAlignment(Qt.AlignCenter) # type: ignore
         
         layout.addWidget(self.icon_label)
         layout.addWidget(self.msg_label)
         layout.addWidget(self.sub_label)
         
         # Make it look clickable
-        self.setCursor(Qt.PointingHandCursor)
+        self.setCursor(Qt.PointingHandCursor) # type: ignore
 
     def mousePressEvent(self, event):
-        if event.button() == Qt.LeftButton:
+        if event.button() == Qt.LeftButton: # type: ignore
             self.clicked.emit()
         super().mousePressEvent(event)
 
@@ -96,7 +96,7 @@ class ContentDelegate(CustomEditorDelegate):
     - When editing: Displays FULL text stored in Qt.UserRole.
     """
     def setEditorData(self, editor, index):
-        full_text = index.data(Qt.UserRole)
+        full_text = index.data(Qt.UserRole) # type: ignore
         if full_text:
             editor.setText(full_text)
         else:
@@ -105,10 +105,10 @@ class ContentDelegate(CustomEditorDelegate):
     def setModelData(self, editor, model, index):
         new_text = editor.text()
         # Save full text to UserRole
-        model.setData(index, new_text, Qt.UserRole)
+        model.setData(index, new_text, Qt.UserRole) # type: ignore
         # Create preview for DisplayRole
         preview = new_text[:100].replace('\n', ' ') + "..." if len(new_text) > 100 else new_text
-        model.setData(index, preview, Qt.DisplayRole)
+        model.setData(index, preview, Qt.DisplayRole) # type: ignore
 
 class ClippingsTableWidget(QTableWidget):
     """
@@ -135,12 +135,13 @@ class ClippingsTableWidget(QTableWidget):
         self.setHorizontalHeaderLabels(columns)
         
         header = self.horizontalHeader()
-        header.setSectionResizeMode(0, QHeaderView.ResizeToContents) # Date
-        header.setSectionResizeMode(1, QHeaderView.Interactive)      # Book
-        header.setSectionResizeMode(2, QHeaderView.Interactive)      # Author
-        header.setSectionResizeMode(3, QHeaderView.Stretch)          # Content
-        header.setSectionResizeMode(4, QHeaderView.ResizeToContents) # Page
-        header.setSectionResizeMode(5, QHeaderView.Interactive)      # Tags
+        if header:
+            header.setSectionResizeMode(0, QHeaderView.ResizeToContents) # type: ignore
+            header.setSectionResizeMode(1, QHeaderView.Interactive)      # type: ignore
+            header.setSectionResizeMode(2, QHeaderView.Interactive)      # type: ignore
+            header.setSectionResizeMode(3, QHeaderView.Stretch)          # type: ignore
+            header.setSectionResizeMode(4, QHeaderView.ResizeToContents) # type: ignore
+            header.setSectionResizeMode(5, QHeaderView.Interactive)      # type: ignore
         
         self.setSelectionBehavior(QAbstractItemView.SelectRows)
         self.setSelectionMode(QAbstractItemView.ExtendedSelection)
@@ -156,7 +157,7 @@ class ClippingsTableWidget(QTableWidget):
         self.setItemDelegateForColumn(2, styled_delegate)
         self.setItemDelegateForColumn(5, styled_delegate)
         
-        self.setContextMenuPolicy(Qt.CustomContextMenu)
+        self.setContextMenuPolicy(Qt.CustomContextMenu) # type: ignore
         self.customContextMenuRequested.connect(self.show_context_menu)
         
         self.itemChanged.connect(self._on_item_changed)
@@ -186,7 +187,7 @@ class ClippingsTableWidget(QTableWidget):
         if self.currentRow() >= 0:
             item = self.item(self.currentRow(), 3)
             if item:
-                full_text = item.data(Qt.UserRole)
+                full_text = item.data(Qt.UserRole) # type: ignore
                 if not full_text: 
                     full_text = item.text()
                 self.row_selected.emit(full_text)
@@ -200,7 +201,7 @@ class ClippingsTableWidget(QTableWidget):
         
         # Metadata Columns (Book=1, Author=2)
         if col in [1, 2]:
-            old_val = item.data(Qt.UserRole)
+            old_val = item.data(Qt.UserRole) # type: ignore
             new_val = item.text().strip()
             
             # If changed and valid
@@ -211,7 +212,7 @@ class ClippingsTableWidget(QTableWidget):
                 for r in range(self.rowCount()):
                     if r == item.row(): continue
                     other_item = self.item(r, col)
-                    if other_item and other_item.data(Qt.UserRole) == old_val:
+                    if other_item and other_item.data(Qt.UserRole) == old_val: # type: ignore
                         count += 1
                 
                 if count > 0:
@@ -227,18 +228,18 @@ class ClippingsTableWidget(QTableWidget):
                         self._is_updating = True # Block signals
                         for r in range(self.rowCount()):
                             target_item = self.item(r, col)
-                            if target_item and target_item.data(Qt.UserRole) == old_val:
+                            if target_item and target_item.data(Qt.UserRole) == old_val: # type: ignore
                                 target_item.setText(new_val)
-                                target_item.setData(Qt.UserRole, new_val)
+                                target_item.setData(Qt.UserRole, new_val) # type: ignore
                         self._is_updating = False
 
             # Update current item's UserRole to accept the change
-            item.setData(Qt.UserRole, new_val)
+            item.setData(Qt.UserRole, new_val) # type: ignore
 
         # Content Column (3)
         if col == 3:
             if self.currentRow() == item.row():
-                full_text = item.data(Qt.UserRole)
+                full_text = item.data(Qt.UserRole) # type: ignore
                 self.row_selected.emit(full_text)
 
     def update_content_from_editor(self, row, new_text):
@@ -251,7 +252,7 @@ class ClippingsTableWidget(QTableWidget):
         if item:
             preview = new_text[:100].replace('\n', ' ') + "..." if len(new_text) > 100 else new_text
             item.setText(preview)
-            item.setData(Qt.UserRole, new_text)
+            item.setData(Qt.UserRole, new_text) # type: ignore
         self._is_updating = False
 
     def populate(self, clippings):
@@ -264,23 +265,23 @@ class ClippingsTableWidget(QTableWidget):
             date_str = clip.date_time.strftime('%Y-%m-%d %H:%M') if clip.date_time else ""
             date_item = QTableWidgetItem(date_str)
             # Store full object for robust retrieval
-            date_item.setData(Qt.UserRole, clip)
+            date_item.setData(Qt.UserRole, clip) # type: ignore
             self.setItem(row, 0, date_item)
             
             # Store plain text in UserRole for Bulk Edit detection
             book_item = QTableWidgetItem(clip.book_title)
-            book_item.setData(Qt.UserRole, clip.book_title)
+            book_item.setData(Qt.UserRole, clip.book_title) # type: ignore
             self.setItem(row, 1, book_item)
             
             author_item = QTableWidgetItem(clip.author)
-            author_item.setData(Qt.UserRole, clip.author)
+            author_item.setData(Qt.UserRole, clip.author) # type: ignore
             self.setItem(row, 2, author_item)
             
             # Content: full in UserRole, truncated in Text
             preview = clip.content[:100].replace('\n', ' ') + "..." if len(clip.content) > 100 else clip.content
             item_text = QTableWidgetItem(preview)
             item_text.setToolTip(clip.content)
-            item_text.setData(Qt.UserRole, clip.content)
+            item_text.setData(Qt.UserRole, clip.content) # type: ignore
             self.setItem(row, 3, item_text)
             
             self.setItem(row, 4, QTableWidgetItem(str(clip.page)))
@@ -293,14 +294,15 @@ class ClippingsTableWidget(QTableWidget):
                 from PyQt5.QtGui import QColor
                 for col in range(self.columnCount()):
                     item = self.item(row, col)
-                    # Dim color
-                    item.setForeground(QColor("#A0A0A0")) # Mid-grey
-                    # Strikeout
-                    font = item.font()
-                    font.setStrikeOut(True)
-                    item.setFont(font)
-                    # Tooltip explanation
-                    item.setToolTip("Marked as duplicate (subset or older edit).")
+                    if item:
+                        # Dim color
+                        item.setForeground(QColor("#A0A0A0")) # Mid-grey
+                        # Strikeout
+                        font = item.font()
+                        font.setStrikeOut(True)
+                        item.setFont(font)
+                        # Tooltip explanation
+                        item.setToolTip("Marked as duplicate (subset or older edit).")
             
         self.setSortingEnabled(True)
         self._is_updating = False
@@ -312,11 +314,20 @@ class ClippingsTableWidget(QTableWidget):
         visible_count = 0
         for row in range(self.rowCount()):
             show = False
-            book = self.item(row, 1).text().lower()
-            author = self.item(row, 2).text().lower()
+            item_book = self.item(row, 1)
+            book = item_book.text().lower() if item_book else ""
+            
+            item_author = self.item(row, 2)
+            author = item_author.text().lower() if item_author else ""
+            
             content_item = self.item(row, 3)
-            content = content_item.data(Qt.UserRole).lower() if content_item else ""
-            tags = self.item(row, 5).text().lower()
+            content = ""
+            if content_item:
+                content_data = content_item.data(Qt.UserRole) # type: ignore
+                content = content_data.lower() if content_data else ""
+                
+            item_tags = self.item(row, 5)
+            tags = item_tags.text().lower() if item_tags else ""
             
             if text in book or text in author or text in content or text in tags:
                 show = True
@@ -370,7 +381,9 @@ class ClippingsTableWidget(QTableWidget):
 
         # Removed 'Clean Up' as requested per user feedback (redundant with main button)
         
-        menu.exec_(self.viewport().mapToGlobal(position))
+        vp = self.viewport()
+        if vp:
+            menu.exec_(vp.mapToGlobal(position))
 
     def copy_to_clipboard_csv(self, rows):
         """Copies selected rows to clipboard as CSV string (Consistent with Export)."""
@@ -382,7 +395,9 @@ class ClippingsTableWidget(QTableWidget):
         exporter = CsvExporter()
         output_str = exporter.create_csv_string(clippings)
             
-        QApplication.clipboard().setText(output_str)
+        cb = QApplication.clipboard()
+        if cb:
+            cb.setText(output_str)
         self.status_message.emit(f"✅ Copied {len(clippings)} rows as CSV", 3000)
 
     def copy_to_clipboard_json(self, rows):
@@ -396,7 +411,9 @@ class ClippingsTableWidget(QTableWidget):
         exporter = JsonExporter()
         output_str = exporter.create_json_string(clippings, context={"creator": "GUI Clipboard"})
             
-        QApplication.clipboard().setText(output_str)
+        cb = QApplication.clipboard()
+        if cb:
+            cb.setText(output_str)
         self.status_message.emit(f"✅ Copied {len(clippings)} rows as JSON", 3000)
 
     def copy_to_clipboard_md(self, rows):
@@ -409,7 +426,9 @@ class ClippingsTableWidget(QTableWidget):
         exporter = MarkdownExporter()
         output_str = exporter.create_clipboard_markdown(clippings)
             
-        QApplication.clipboard().setText(output_str)
+        cb = QApplication.clipboard()
+        if cb:
+            cb.setText(output_str)
         self.status_message.emit(f"✅ Copied {len(clippings)} rows as Markdown", 3000)
 
     def delete_all_duplicates(self, silent_if_none=False):
@@ -419,7 +438,7 @@ class ClippingsTableWidget(QTableWidget):
             # Check UserRole of column 0 to check the object
             item = self.item(r, 0)
             if item:
-                clip = item.data(Qt.UserRole)
+                clip = item.data(Qt.UserRole) # type: ignore
                 if clip.is_duplicate:
                     rows_to_delete.append(r)
         
@@ -429,7 +448,7 @@ class ClippingsTableWidget(QTableWidget):
             # Prepare detail report
             details_list = []
             for r in rows_to_delete:
-                clip = self.item(r, 0).data(Qt.UserRole)
+                clip = self.item(r, 0).data(Qt.UserRole) # type: ignore
                 snippet = clip.content[:300].replace('\n', ' ') + "..." if len(clip.content) > 300 else clip.content
                 details_list.append(f"[{clip.entry_type.upper()}] {clip.book_title}\n{snippet}\n")
             
@@ -485,7 +504,7 @@ class ClippingsTableWidget(QTableWidget):
                         self.setItem(new_row, col, new_item)
                         # Deep copy UserRole for content
                         if col == 3:
-                           new_item.setData(Qt.UserRole, item.data(Qt.UserRole))
+                           new_item.setData(Qt.UserRole, item.data(Qt.UserRole)) # type: ignore
         finally:
             self.setSortingEnabled(True)
             self._is_updating = False
@@ -509,7 +528,7 @@ class ClippingsTableWidget(QTableWidget):
             item_0 = self.item(r, 0)
             if not item_0: continue
             
-            original_clip = item_0.data(Qt.UserRole)
+            original_clip = item_0.data(Qt.UserRole) # type: ignore
             if not original_clip: continue
             
             # Retrieve potentially edited content
@@ -523,7 +542,9 @@ class ClippingsTableWidget(QTableWidget):
 
             # Column 3: Content (UserRole has full text)
             item_content = self.item(r, 3)
-            new_content = item_content.data(Qt.UserRole)
+            new_content = None
+            if item_content:
+                new_content = item_content.data(Qt.UserRole) # type: ignore
             if not new_content:
                 new_content = item_content.text() if item_content else original_clip.content
             

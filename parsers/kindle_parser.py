@@ -3,7 +3,7 @@ import dateparser
 import json
 import os
 import logging
-from typing import List, Dict, Optional, Tuple
+from typing import List, Dict, Optional, Tuple, Any
 from domain.models import Clipping
 from parsers.patterns import DEFAULT_PATTERNS
 from utils.text_cleaner import TextCleaner
@@ -21,7 +21,7 @@ class KindleClippingsParser:
         self.language_code = language_code
         self.language_file = language_file
         self._load_language_patterns()
-        self.stats = {'total': 0, 'parsed': 0, 'skipped': 0, 'failed_blocks': [], 'titles_cleaned': 0, 'title_changes': []}
+        self.stats: Dict[str, Any] = {'total': 0, 'parsed': 0, 'skipped': 0, 'failed_blocks': [], 'titles_cleaned': 0, 'title_changes': []}
 
     def _load_language_patterns(self):
         """Loads regex patterns from languages.json based on configured language."""
@@ -73,7 +73,7 @@ class KindleClippingsParser:
                 
         if scores:
             # Pick the language with the most keyword matches
-            best_lang = max(scores, key=scores.get)
+            best_lang = max(scores, key=lambda k: scores[k])
             logger.info(f"Language detected: {best_lang} (Score: {scores[best_lang]})")
             return best_lang
                 
@@ -83,7 +83,7 @@ class KindleClippingsParser:
     def get_stats(self):
         return self.stats
 
-    def parse_file(self, file_path: str, encoding: str = None) -> List[Clipping]:
+    def parse_file(self, file_path: str, encoding: Optional[str] = None) -> List[Clipping]:
         """
         Parses parsing with robust encoding handling.
         """
@@ -185,7 +185,7 @@ class KindleClippingsParser:
             except:
                 return -1, -1
 
-        highlights_by_book = {}
+        highlights_by_book: Dict[str, List[Clipping]] = {}
         for clip in highlights:
             if clip.book_title not in highlights_by_book:
                 highlights_by_book[clip.book_title] = []

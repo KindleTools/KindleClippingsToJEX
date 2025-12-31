@@ -1,6 +1,6 @@
 import csv
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from domain.models import Clipping
 from exporters.base import BaseExporter
 
@@ -39,7 +39,7 @@ class CsvExporter(BaseExporter):
         
         return output.getvalue()
 
-    def export(self, clippings: List[Clipping], output_file: str, context: Dict[str, Any] = None):
+    def export(self, clippings: List[Clipping], output_file: str, context: Optional[Dict[str, Any]] = None):
         """
         Writes a list of Clipping objects to a CSV file.
         Context is accepted but ignored for CSV.

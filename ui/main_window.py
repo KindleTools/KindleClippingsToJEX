@@ -1,5 +1,6 @@
 
 import os
+import logging
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                             QPushButton, QLabel, QFileDialog, QSplitter, 
                             QTextEdit, QMessageBox, QStackedWidget, QProgressDialog, QFrame)
@@ -81,7 +82,7 @@ class MainWindow(QMainWindow):
         self.data_layout.addLayout(search_layout)
 
         # --- Splitter (Table + Editor) ---
-        self.splitter = QSplitter(Qt.Vertical)
+        self.splitter = QSplitter(Qt.Vertical) # type: ignore
         
         self.table = ClippingsTableWidget()
         self.table.row_selected.connect(self.on_table_row_selected)
@@ -90,7 +91,9 @@ class MainWindow(QMainWindow):
         # Connect context menu export signal
         self.table.request_export_selection.connect(self.export_selection_handler)
         # Connect status feedback from table (e.g. Copy actions)
-        self.table.status_message.connect(self.statusBar().showMessage)
+        sb = self.statusBar()
+        if sb:
+            self.table.status_message.connect(sb.showMessage)
         
         self.text_editor = QTextEdit()
         self.text_editor.setPlaceholderText("Select a note to edit...")
@@ -118,7 +121,7 @@ class MainWindow(QMainWindow):
         def create_stat_label(default_text):
             lbl = QLabel(default_text)
             lbl.setObjectName("statValue")
-            lbl.setAlignment(Qt.AlignCenter)
+            lbl.setAlignment(Qt.AlignCenter) # type: ignore
             return lbl
 
         self.lbl_stat_total = create_stat_label("0\nHighlights")
@@ -192,17 +195,17 @@ class MainWindow(QMainWindow):
         # Buttons
         self.btn_load = QPushButton("Open File")
         self.btn_load.clicked.connect(self.load_file_dialog)
-        self.btn_load.setCursor(Qt.PointingHandCursor)
+        self.btn_load.setCursor(Qt.PointingHandCursor) # type: ignore
         
         self.btn_export = QPushButton("Export Notes")
         self.btn_export.clicked.connect(self.export_jex)
-        self.btn_export.setCursor(Qt.PointingHandCursor)
+        self.btn_export.setCursor(Qt.PointingHandCursor) # type: ignore
         self.btn_export.setEnabled(False)
         self.btn_export.setObjectName("primaryBtn")
 
         # Clean Up Button (Hidden by default, shown if duplicates mostly)
         self.btn_cleanup = QPushButton("♻️ Clean Duplicates")
-        self.btn_cleanup.setCursor(Qt.PointingHandCursor)
+        self.btn_cleanup.setCursor(Qt.PointingHandCursor) # type: ignore
         self.btn_cleanup.clicked.connect(self.on_cleanup_click)
         self.btn_cleanup.hide() # Hidden until loaded
         
@@ -210,13 +213,13 @@ class MainWindow(QMainWindow):
         self.btn_theme.setFixedSize(40, 36)
         self.btn_theme.setToolTip("Toggle Dark Mode")
         self.btn_theme.clicked.connect(self.toggle_theme)
-        self.btn_theme.setCursor(Qt.PointingHandCursor)
+        self.btn_theme.setCursor(Qt.PointingHandCursor) # type: ignore
 
         self.btn_settings = QPushButton("⚙️")
         self.btn_settings.setFixedSize(40, 36) # Squaresh
         self.btn_settings.setToolTip("Settings")
         self.btn_settings.clicked.connect(self.open_settings)
-        self.btn_settings.setCursor(Qt.PointingHandCursor)
+        self.btn_settings.setCursor(Qt.PointingHandCursor) # type: ignore
         
         header.addWidget(self.btn_load)
         header.addWidget(self.btn_cleanup) # Add before Export? Or after?
@@ -320,7 +323,7 @@ class MainWindow(QMainWindow):
     def load_file(self, file_path):
         """Parses the file and updates the UI using a background thread."""
         self.progress = QProgressDialog("Loading highlights...", None, 0, 0, self)
-        self.progress.setWindowModality(Qt.WindowModal)
+        self.progress.setWindowModality(Qt.WindowModal) # type: ignore
         self.progress.setMinimumDuration(0)
         self.progress.setCancelButton(None)
         self.progress.show()
@@ -423,6 +426,7 @@ class MainWindow(QMainWindow):
 
     def on_export_error(self, message):
         """Standardized error handler for export thread."""
+        self.progress.close()
         logging.getLogger("KindleToJex.MainWindow").error(f"Export error: {message}")
         QMessageBox.critical(self, "Export Error", f"An error occurred during export:\n\n{message}")
 
@@ -434,13 +438,17 @@ class MainWindow(QMainWindow):
             for url in event.mimeData().urls():
                 if url.toLocalFile().lower().endswith('.txt'):
                     event.acceptProposedAction()
-                    self.statusBar().showMessage("Drop to load 'My Clippings.txt'...", 5000)
+                    sb = self.statusBar()
+                    if sb:
+                        sb.showMessage("Drop to load 'My Clippings.txt'...", 5000)
                     # Optional: Add visual highlight to central widget?
                     return
         event.ignore()
     
     def dragLeaveEvent(self, event):
-        self.statusBar().clearMessage()
+        sb = self.statusBar()
+        if sb:
+            sb.clearMessage()
         super().dragLeaveEvent(event)
 
     def dropEvent(self, event):
@@ -512,7 +520,7 @@ class MainWindow(QMainWindow):
 
         # Start Export Thread
         self.progress = QProgressDialog("Exporting...", None, 0, 0, self)
-        self.progress.setWindowModality(Qt.WindowModal)
+        self.progress.setWindowModality(Qt.WindowModal) # type: ignore
         self.progress.setMinimumDuration(0)
         self.progress.setCancelButton(None)
         self.progress.show()
@@ -541,13 +549,12 @@ class MainWindow(QMainWindow):
 
     def on_export_finished(self, count):
         self.progress.close()
-        self.statusBar().showMessage(f"Successfully exported {count} notes.", 5000)
+        sb = self.statusBar()
+        if sb:
+            sb.showMessage(f"Successfully exported {count} notes.", 5000)
         # Optional: Flash the export button or something similar if desired, 
         # but status bar is standard for "zen" apps.
 
-    def on_export_error(self, msg):
-        self.progress.close()
-        QMessageBox.critical(self, "Error", msg)
 
 
     def apply_styles(self):

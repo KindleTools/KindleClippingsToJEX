@@ -1,6 +1,6 @@
 import json
 import logging
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from domain.models import Clipping
 from exporters.base import BaseExporter
 
@@ -12,7 +12,7 @@ class JsonExporter(BaseExporter):
     Ideal for backups or developers who want to process the data programmatically.
     """
     
-    def create_json_string(self, clippings: List[Clipping], context: Dict[str, Any] = None) -> str:
+    def create_json_string(self, clippings: List[Clipping], context: Optional[Dict[str, Any]] = None) -> str:
         """
         Generates the JSON string for a list of clippings.
         """
@@ -47,7 +47,7 @@ class JsonExporter(BaseExporter):
         }
         return json.dumps(export_data, indent=2, ensure_ascii=False)
 
-    def export(self, clippings: List[Clipping], output_file: str, context: Dict[str, Any] = None):
+    def export(self, clippings: List[Clipping], output_file: str, context: Optional[Dict[str, Any]] = None):
         """
         Writes a list of Clipping objects to a JSON file.
         """

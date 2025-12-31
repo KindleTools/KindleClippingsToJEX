@@ -1,5 +1,5 @@
 from abc import ABC, abstractmethod
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from domain.models import Clipping
 
 class BaseExporter(ABC):
@@ -9,7 +9,7 @@ class BaseExporter(ABC):
     """
     
     @abstractmethod
-    def export(self, clippings: List[Clipping], output_file: str, context: Dict[str, Any] = None):
+    def export(self, clippings: List[Clipping], output_file: str, context: Optional[Dict[str, Any]] = None):
         """
         Exports the given clippings to the specified output file.
         

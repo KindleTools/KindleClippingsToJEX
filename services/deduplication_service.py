@@ -1,9 +1,15 @@
-
-from typing import List, Tuple, Dict
+from datetime import datetime
+from typing import List, Tuple, Dict, TypedDict
 from domain.models import Clipping
 import logging
 
 logger = logging.getLogger("KindleToJex.Deduplicator")
+
+class EnhancedClip(TypedDict):
+    clip: Clipping
+    start: int
+    end: int
+    len: int
 
 class SmartDeduplicator:
     """
@@ -44,7 +50,6 @@ class SmartDeduplicator:
 
         # Return ALL clippings (some are now flagged)
         # Restore chronological order if shuffled by grouping
-        from datetime import datetime
         clippings.sort(key=lambda x: x.date_time if x.date_time else datetime.min)
         
         return clippings
@@ -74,7 +79,7 @@ class SmartDeduplicator:
                 return 0, 0
 
         # Attach parsed locs for sorting
-        enhanced = []
+        enhanced: List[EnhancedClip] = []
         for h in highlights:
             # Heuristics for "Accidental" vs "Short but valid"
             # SKIP if the user has explicitly tagged/noted this highlight.
@@ -98,7 +103,7 @@ class SmartDeduplicator:
             })
 
         # Sort primarily by Start Location
-        enhanced.sort(key=lambda x: x['start'])
+        enhanced.sort(key=lambda x: int(x['start']))
 
         if not enhanced:
             return

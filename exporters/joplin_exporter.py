@@ -4,8 +4,9 @@ import logging
 import hashlib
 from uuid import uuid4
 from datetime import datetime, timezone
-from typing import Dict, Any, List, Tuple
+from typing import Dict, Any, List, Tuple, Optional
 from domain.models import Clipping
+from domain.constants import GENERATOR_STRING
 from domain.joplin import (
     JoplinNotebook, JoplinNote, JoplinTag, 
     JoplinTagAssociation, JoplinEntityType
@@ -25,7 +26,7 @@ class JoplinEntityBuilder:
         return datetime.now(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
 
     @staticmethod
-    def _generate_id(key: str = None) -> str:
+    def _generate_id(key: Optional[str] = None) -> str:
         """
         Generates a 32-char hex ID.
         If 'key' is provided, returns a deterministic MD5 hash of the key.
@@ -55,9 +56,9 @@ class JoplinEntityBuilder:
 
     @staticmethod
     def create_note(title: str, body: str, parent_id: str, 
-                   created_time: datetime = None, 
+                   created_time: Optional[datetime] = None, 
                    latitude=0.0, longitude=0.0, altitude=0.0, author="",
-                   clipping_ref: Clipping = None) -> JoplinNote:
+                   clipping_ref: Optional[Clipping] = None) -> JoplinNote:
         
         now = created_time.isoformat(timespec='milliseconds') if created_time else JoplinEntityBuilder._now()
         
@@ -87,7 +88,7 @@ class JoplinEntityBuilder:
             altitude=altitude,
             author=author,
             source='kindle-to-jex',
-            source_application='KindleClippingsToJEX v0.2.0',
+            source_application=GENERATOR_STRING,
             is_todo=0,
             markup_language=1
         )
@@ -133,7 +134,7 @@ class JoplinExporter(BaseExporter):
         self.tags_cache: Dict[str, str] = {}
         self.builder = JoplinEntityBuilder()
 
-    def export(self, clippings: List[Clipping], output_file: str, context: Dict[str, Any] = None):
+    def export(self, clippings: List[Clipping], output_file: str, context: Optional[Dict[str, Any]] = None):
         """
         Main entry point for JEX export.
         """

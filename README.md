@@ -218,15 +218,34 @@ The project follows a modular hexagon-like architecture to separate UI, Business
 └── pyproject.toml                 # Project Definition
 ```
 
-## Running Tests
-
-To run the test suite and ensure everything is working correctly:
-
+## Development & Testing
+ 
+To set up the development environment:
+ 
 ```bash
+# Install development dependencies
+pip install -r requirements.txt
+pip install pre-commit mypy ruff coverage
+ 
+# Install pre-commit hooks
+pre-commit install
+```
+ 
+Run quality checks manually:
+```bash
+# Type Checking
+mypy .
+ 
+# Linting & Formatting
+ruff check .
+ruff format .
+```
+ 
+Run the test suite:
+ 
 ```bash
 python -m unittest discover tests
-# For coverage report (optional)
-pip install coverage
+# For coverage report
 coverage run -m unittest discover tests
 coverage report -m
 ```

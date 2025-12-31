@@ -73,7 +73,7 @@ class ClippingsService:
         if code in self.exporters_cache:
             return self.exporters_cache[code]
 
-        exporter = None
+        exporter: BaseExporter
         if code == 'jex':
             exporter = JoplinExporter()
         elif code == 'csv':

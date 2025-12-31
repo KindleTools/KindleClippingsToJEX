@@ -1,8 +1,9 @@
 import zipfile
 import re
-from typing import List, Dict, Any
+from typing import List, Dict, Any, Optional
 from datetime import datetime
 from domain.models import Clipping
+from domain.constants import GENERATOR_STRING
 from exporters.base import BaseExporter
 
 class MarkdownExporter(BaseExporter):
@@ -32,7 +33,7 @@ class MarkdownExporter(BaseExporter):
         
         return "\n\n---\n\n".join(output)
 
-    def export(self, clippings: List[Clipping], output_file: str, context: Dict[str, Any] = None):
+    def export(self, clippings: List[Clipping], output_file: str, context: Optional[Dict[str, Any]] = None):
         """
         Writes a list of Clipping objects to a ZIP file containing .md files organized by folders.
         Structure: AUTHOR/Book/Note.md
@@ -62,7 +63,7 @@ class MarkdownExporter(BaseExporter):
             raise IOError(f"Failed to create Markdown/ZIP archive: {e}")
 
     # Alias for legacy compatibility
-    def export_clippings(self, clippings: List[Clipping], output_file: str, context: Dict[str, Any] = None):
+    def export_clippings(self, clippings: List[Clipping], output_file: str, context: Optional[Dict[str, Any]] = None):
         self.export(clippings, output_file, context)
 
     def _generate_filename(self, clipping: Clipping) -> str:
@@ -119,7 +120,7 @@ date: {date_iso}
 page: "{page_val}"
 tags: {tags_list}
 source: "kindle"
-generator: "KindleClippingsToJEX v0.2.0"
+generator: "{GENERATOR_STRING}"
 ---"""
         
         return f"{yaml_block}\n\n{clipping.content}\n"

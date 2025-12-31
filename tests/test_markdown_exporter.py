@@ -3,6 +3,7 @@ import os
 import zipfile
 from datetime import datetime
 from domain.models import Clipping
+from domain.constants import GENERATOR_STRING
 from exporters.markdown_exporter import MarkdownExporter
 
 class TestMarkdownExporter(unittest.TestCase):
@@ -46,7 +47,7 @@ class TestMarkdownExporter(unittest.TestCase):
             self.assertIn('author: "Brandon Sanderson"', content)
             self.assertIn('date: 2023-10-27T12:00:00', content)
             self.assertIn('source: "kindle"', content)
-            self.assertIn('generator: "KindleClippingsToJEX v0.2.0"', content)
+            self.assertIn(f'generator: "{GENERATOR_STRING}"', content)
             
             # Verify Removed Fields are ABSENT (Clean UX)
             self.assertNotIn('created:', content)
