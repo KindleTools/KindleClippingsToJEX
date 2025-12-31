@@ -76,11 +76,11 @@ The project features a completely redesigned, modern "Zen" interface focused on 
   - **Content**: Smart preview that expands on double-click.
   - **Tags**: Editable tags column (comma-separated).
 - **Smart Search**: Real-time filtering by text. Type "Harry" and instantly see only related notes. The export function respects this filter ("What You See Is What You Get").
-- **Bidirectional Editing**: 
+- **Bidirectional Editing**:
   - Edit text directly in the table cells.
   - OR use the spacious **Bottom Editor Pane** for long texts.
   - Changes are synced instantly between views.
-- **Power Selection & Context Menu**: 
+- **Power Selection & Context Menu**:
   - **Multi-select**: Use `Shift+Click` or `Ctrl+Click` to select multiple rows.
   - **Right-Click Menu**:
     - **Export Selected**: Create a mini .jex file containing ONLY the selected notes.
@@ -131,7 +131,7 @@ Simply download the latest executable for your system from the **[Releases Page]
 
 4. **Build the Executable (Optional):**
    Simply double-click `build_exe.bat` on Windows to generate a standalone `.exe` in the `dist/` folder.
-   
+
    > **Note for Mac/Linux Users:** To build efficiently for all platforms without needing multiple computers, this project includes a **GitHub Actions** workflow. Simply create a "Release" in your GitHub repository, and it will automatically build and attach `.exe` (Windows), `.bin` (Linux), and Mac executables.
 
 ## Configuration
@@ -161,15 +161,15 @@ python main.py
 
 **Workflow:**
 1. **Load**: The app opens your default clippings file. If missing, click **"Open File"**.
-2. **Curate**: 
+2. **Curate**:
    - Use the **Search Bar** to filter by book title or content.
    - Use **Ctrl+Click** to select specific notes.
    - Right-click and select **"Delete Row(s)"** to remove irrelevant highlights.
    - Edit the **Content** or **Tags** columns to fix typos or add context.
-3. **Export**: 
+3. **Export**:
    - **Export Visible**: Click the main **"Export Notes"** button. You can choose between **JEX** (for Joplin), **CSV** (for Excel), **Markdown ZIP** (for Obsidian), or **JSON**.
    - **Export Selection**: Select specific rows, Right-Click > **"Export Selected"** to save just those notes (JEX, CSV, ZIP, or JSON).
-4. **Import**: 
+4. **Import**:
    - **Joplin**: Go to **File > Import > JEX - Joplin Export File**.
    - **Obsidian**: Unzip the downloaded file and drag the folder into your Obsidian Vault.
    - **Excel**: Open the generated CSV file directly.
@@ -219,30 +219,30 @@ The project follows a modular hexagon-like architecture to separate UI, Business
 ```
 
 ## Development & Testing
- 
+
 To set up the development environment:
- 
+
 ```bash
 # Install development dependencies
 pip install -r requirements.txt
 pip install pre-commit mypy ruff coverage
- 
+
 # Install pre-commit hooks
 pre-commit install
 ```
- 
+
 Run quality checks manually:
 ```bash
 # Type Checking
 mypy .
- 
+
 # Linting & Formatting
 ruff check .
 ruff format .
 ```
- 
+
 Run the test suite:
- 
+
 ```bash
 python -m unittest discover tests
 # For coverage report

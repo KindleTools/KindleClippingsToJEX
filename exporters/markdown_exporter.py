@@ -1,17 +1,17 @@
 import zipfile
 import re
 from typing import List, Dict, Any, Optional
-from datetime import datetime
 from domain.models import Clipping
 from domain.constants import GENERATOR_STRING
 from exporters.base import BaseExporter
+
 
 class MarkdownExporter(BaseExporter):
     """
     Handles the export of clippings to a ZIP file containing Markdown files with Yaml frontmatter.
     Standard format for Obsidian and other PKM tools.
     """
-    
+
     def create_clipboard_markdown(self, clippings: List[Clipping]) -> str:
         """
         Generates a simplified Markdown string for clipboard copy/paste.
@@ -19,31 +19,35 @@ class MarkdownExporter(BaseExporter):
         """
         output = []
         for clip in clippings:
-             # Citation format: — *Title* by **Author** (Page X / Loc Y)
+            # Citation format: — *Title* by **Author** (Page X / Loc Y)
             meta = []
-            if clip.page: meta.append(f"p. {clip.page}")
-            if clip.location: meta.append(f"loc. {clip.location}")
+            if clip.page:
+                meta.append(f"p. {clip.page}")
+            if clip.location:
+                meta.append(f"loc. {clip.location}")
             meta_str = f" ({', '.join(meta)})" if meta else ""
-            
+
             # Reverted to normal casing for content
             md = f"> {clip.content}\n\n— *{clip.book_title}* by **{clip.author}**{meta_str}"
             if clip.tags:
                 md += f" #{' #'.join(clip.tags)}"
             output.append(md)
-        
+
         return "\n\n---\n\n".join(output)
 
-    def export(self, clippings: List[Clipping], output_file: str, context: Optional[Dict[str, Any]] = None):
+    def export(
+        self, clippings: List[Clipping], output_file: str, context: Optional[Dict[str, Any]] = None
+    ):
         """
         Writes a list of Clipping objects to a ZIP file containing .md files organized by folders.
         Structure: AUTHOR/Book/Note.md
         """
         # Ensure output filename ends with .zip
-        if not output_file.lower().endswith('.zip'):
-            output_file += '.zip'
-            
+        if not output_file.lower().endswith(".zip"):
+            output_file += ".zip"
+
         try:
-            with zipfile.ZipFile(output_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
+            with zipfile.ZipFile(output_file, "w", zipfile.ZIP_DEFLATED) as zipf:
                 for clipping in clippings:
                     if clipping.is_duplicate:
                         continue
@@ -52,18 +56,20 @@ class MarkdownExporter(BaseExporter):
                     author_folder = self._sanitize_filename(clipping.author.upper())
                     book_folder = self._sanitize_filename(clipping.book_title)
                     filename = self._generate_filename(clipping)
-                    
+
                     # Construct full path inside ZIP
                     full_path = f"{author_folder}/{book_folder}/{filename}"
-                    
+
                     content = self._generate_markdown_content(clipping)
                     zipf.writestr(full_path, content)
-                    
+
         except Exception as e:
             raise IOError(f"Failed to create Markdown/ZIP archive: {e}")
 
     # Alias for legacy compatibility
-    def export_clippings(self, clippings: List[Clipping], output_file: str, context: Optional[Dict[str, Any]] = None):
+    def export_clippings(
+        self, clippings: List[Clipping], output_file: str, context: Optional[Dict[str, Any]] = None
+    ):
         self.export(clippings, output_file, context)
 
     def _generate_filename(self, clipping: Clipping) -> str:
@@ -71,15 +77,15 @@ class MarkdownExporter(BaseExporter):
         Generates a sanitized, unique filename for the note.
         """
         date_str = clipping.date_time.strftime("%Y%m%d%H%M%S") if clipping.date_time else "000000"
-        
+
         prefix = "Note"
         if clipping.page:
-             prefix = f"Page {clipping.page}"
+            prefix = f"Page {clipping.page}"
         elif clipping.location:
-             prefix = f"Loc {clipping.location}"
-             
+            prefix = f"Loc {clipping.location}"
+
         content_hash = hash(clipping.content) % 10000
-        
+
         sanitized_prefix = self._sanitize_filename(prefix)
         return f"{sanitized_prefix} - {date_str}_{content_hash:04d}.md"
 
@@ -109,10 +115,10 @@ class MarkdownExporter(BaseExporter):
         title = clipping.book_title.replace('"', '\\"')
         page_val = clipping.page if clipping.page else ""
         date_iso = clipping.date_time.isoformat() if clipping.date_time else ""
-        
+
         # Format tags as a YAML list: [tag1, tag2]
         tags_list = f"[{', '.join(clipping.tags)}]" if clipping.tags else "[]"
-        
+
         yaml_block = f"""---
 book: "{title}"
 author: "{author}"
@@ -122,5 +128,5 @@ tags: {tags_list}
 source: "kindle"
 generator: "{GENERATOR_STRING}"
 ---"""
-        
+
         return f"{yaml_block}\n\n{clipping.content}\n"

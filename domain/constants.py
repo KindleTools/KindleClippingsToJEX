@@ -1,4 +1,3 @@
-
 # Application Constants
 
 APP_NAME = "KindleClippingsToJEX"
