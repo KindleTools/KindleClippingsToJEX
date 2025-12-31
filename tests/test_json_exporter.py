@@ -19,7 +19,7 @@ class TestJsonExporter(unittest.TestCase):
                 location="100",
                 page="10",
                 tags=["tag1"],
-                type="highlight"
+                entry_type="highlight"
             )
         ]
 

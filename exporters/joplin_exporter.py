@@ -3,7 +3,7 @@ import io
 import logging
 import hashlib
 from uuid import uuid4
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Dict, Any, List, Tuple
 from domain.models import Clipping
 from domain.joplin import (
@@ -22,7 +22,7 @@ class JoplinEntityBuilder:
     
     @staticmethod
     def _now():
-        return datetime.now().isoformat(timespec='milliseconds').replace('+00:00', 'Z')
+        return datetime.now(timezone.utc).isoformat(timespec='milliseconds').replace('+00:00', 'Z')
 
     @staticmethod
     def _generate_id(key: str = None) -> str:
@@ -173,8 +173,8 @@ class JoplinExporter(BaseExporter):
     def _process_single_clipping(self, clip: Clipping, root_id: str, 
                                 location: Tuple[float, float, int], creator: str):
         
-        # Author Notebook
-        author_name = clip.author
+        # Author Notebook - Uppercase per user requirement
+        author_name = clip.author.upper()
         if author_name not in self.authors_cache:
             author_nb = self.builder.create_notebook(author_name, parent_id=root_id)
             self.entities_to_export.append(author_nb)
@@ -246,40 +246,44 @@ class JoplinExporter(BaseExporter):
                 tar.addfile(tar_info, file_obj)
 
     def _create_entity_content(self, entity: Dict[str, Any]) -> str:
-        # Optimized with f-strings for cleaner serialization
+        # Standard Joplin RAW Format:
+        # Line 1: Title
+        # Line 2: Empty
+        # Line 3+: Body (if note)
+        # ... Empty Line ...
+        # Line N: Properties
+        
         parts = []
         
-        # 1. Title (Header)
-        if 'title' in entity:
-            parts.append(f"{entity['title']}\n\n")
+        # 1. Title (Header) - Universal for Notes, Tags, etc.
+        # The user confirmed: "Tag name up top".
+        parts.append(entity.get('title', ''))
+        parts.append("") # Blank separator
         
-        # 2. Body (Header)
-        if 'body' in entity:
-            parts.append(f"{entity['body']}\n\n")
+        # 2. Body (If present)
+        if entity.get('body'):
+            parts.append(entity['body'])
+            parts.append("") # Blank separator
             
         # 3. Properties
         special_keys = {'title', 'body', 'type_'}
         
         # Helper for value normalization
         def normalize_val(v):
-            return v.value if isinstance(v, JoplinEntityType) else v
+            return v.value if hasattr(v, 'value') else v
 
-        # Using list comprehension + join is often faster and cleaner
-        props = [
-            f"{key}: {normalize_val(value)}" 
-            for key, value in entity.items() 
-            if key not in special_keys
-        ]
-        parts.extend(props)
+        # Add generic properties
+        for key, value in entity.items():
+            if key not in special_keys:
+                parts.append(f"{key}: {normalize_val(value)}")
             
         # 4. Type (Last)
         if 'type_' in entity:
             parts.append(f"type_: {normalize_val(entity['type_'])}")
             
-        # Ensure final newline
-        if parts and not parts[-1].endswith('\n'):
-             parts.append("")
-
+        # Join adds newlines between parts.
+        # If parts=['Title', '', 'id: 1'] -> "Title\n\nid: 1" (Correct single blank line)
+        # If parts=['Title', '', 'Body', '', 'id: 1'] -> "Title\n\nBody\n\nid: 1" (Correct)
         return "\n".join(parts)
 
     # Configurable Layout Constants
@@ -327,7 +331,7 @@ class JoplinExporter(BaseExporter):
     def _format_body(self, clip: Clipping) -> str:
         meta = [
             f"- date: {clip.date_time}",
-            f"- author: {clip.author}",
+            f"- author: {clip.author}", # Original Case
             f"- book: {clip.book_title}",
             f"- page: {clip.page}" if clip.page else None,
             # location removed as per request (technical field)

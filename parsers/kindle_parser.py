@@ -16,18 +16,20 @@ class KindleClippingsParser:
     """
     Parses 'My Clippings.txt' files from Kindle devices.
     """
-    def __init__(self, separator="==========", language_code="es"):
+    def __init__(self, separator="==========", language_code="es", language_file=None):
         self.separator = separator
         self.language_code = language_code
+        self.language_file = language_file
         self._load_language_patterns()
         self.stats = {'total': 0, 'parsed': 0, 'skipped': 0, 'failed_blocks': [], 'titles_cleaned': 0, 'title_changes': []}
 
     def _load_language_patterns(self):
         """Loads regex patterns from languages.json based on configured language."""
-        # Locate languages.json relative to this file
-        # Locate languages.json using ConfigManager
-        from utils.config_manager import get_config_manager
-        lang_file = get_config_manager().get_resource_path('languages.json')
+        if self.language_file:
+            lang_file = self.language_file
+        else:
+             # Fallback if no file provided (e.g. in simple tests)
+             lang_file = 'languages.json'
         
         # Default fallback patterns (Spanish)
         # Use imported constant as default
@@ -155,7 +157,7 @@ class KindleClippingsParser:
                     date_time=data['date_time'],
                     location=data['location'],
                     page=data['page'],
-                    type='highlight'
+                    entry_type='highlight'
                 )
                 
                 # Generate Deterministic ID

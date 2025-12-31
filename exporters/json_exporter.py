@@ -25,7 +25,7 @@ class JsonExporter(BaseExporter):
                 'book_title': clip.book_title,
                 'author': clip.author,
                 'content': clip.content,
-                'type': clip.type,
+                'type': clip.entry_type,
                 'date_time': clip.date_time.isoformat() if clip.date_time else None,
                 'page': clip.page,
                 'location': clip.location,

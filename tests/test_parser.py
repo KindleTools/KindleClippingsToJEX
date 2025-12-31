@@ -31,7 +31,7 @@ En un lugar de la mancha...
         
         self.assertEqual(clip.book_title, "El Quijote")
         self.assertEqual(clip.author, "Cervantes, Miguel de")
-        self.assertEqual(clip.type, "highlight")
+        self.assertEqual(clip.entry_type, "highlight")
         self.assertEqual(clip.page, "12")
         self.assertEqual(clip.content.strip(), "En un lugar de la mancha...")
         self.assertEqual(clip.date_time.year, 2018)

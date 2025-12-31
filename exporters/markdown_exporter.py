@@ -24,6 +24,7 @@ class MarkdownExporter(BaseExporter):
             if clip.location: meta.append(f"loc. {clip.location}")
             meta_str = f" ({', '.join(meta)})" if meta else ""
             
+            # Reverted to normal casing for content
             md = f"> {clip.content}\n\n— *{clip.book_title}* by **{clip.author}**{meta_str}"
             if clip.tags:
                 md += f" #{' #'.join(clip.tags)}"
@@ -34,7 +35,7 @@ class MarkdownExporter(BaseExporter):
     def export(self, clippings: List[Clipping], output_file: str, context: Dict[str, Any] = None):
         """
         Writes a list of Clipping objects to a ZIP file containing .md files organized by folders.
-        Structure: Author/Book/Note.md
+        Structure: AUTHOR/Book/Note.md
         """
         # Ensure output filename ends with .zip
         if not output_file.lower().endswith('.zip'):
@@ -46,8 +47,8 @@ class MarkdownExporter(BaseExporter):
                     if clipping.is_duplicate:
                         continue
 
-                    # Clean paths
-                    author_folder = self._sanitize_filename(clipping.author)
+                    # Clean paths - Author uppercase (Folder Only)
+                    author_folder = self._sanitize_filename(clipping.author.upper())
                     book_folder = self._sanitize_filename(clipping.book_title)
                     filename = self._generate_filename(clipping)
                     
@@ -102,6 +103,7 @@ class MarkdownExporter(BaseExporter):
         Generates the Markdown string with clean YAML Frontmatter.
         """
         # Escape quotes in YAML strings to prevent breaking the format
+        # Author normal case for Metadata
         author = clipping.author.replace('"', '\\"')
         title = clipping.book_title.replace('"', '\\"')
         page_val = clipping.page if clipping.page else ""

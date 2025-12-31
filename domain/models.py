@@ -25,7 +25,7 @@ class Clipping:
     date_time: datetime
     location: str = ""
     page: str = ""
-    type: str = "highlight" 
+    entry_type: str = "highlight" 
     tags: List[str] = field(default_factory=list)
     is_duplicate: bool = False # Used for UI flagging
     uid: str = "" # Deterministic ID

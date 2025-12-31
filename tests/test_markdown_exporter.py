@@ -19,7 +19,7 @@ class TestMarkdownExporter(unittest.TestCase):
                 location="100-200",
                 page="42",
                 tags=["fantasy", "epic"],
-                type="highlight"
+                entry_type="highlight"
             )
         ]
 
@@ -34,8 +34,8 @@ class TestMarkdownExporter(unittest.TestCase):
             file_list = zipf.namelist()
             self.assertEqual(len(file_list), 1)
             
-            # Check Folder Structure: Author / Book / ...
-            expected_start = "Brandon Sanderson/The Way of Kings/"
+            # Check Folder Structure: AUTHOR / Book / ...
+            expected_start = "BRANDON SANDERSON/The Way of Kings/"
             self.assertTrue(file_list[0].startswith(expected_start), f"Path {file_list[0]} does not match expected structure.")
             
             # Check Content

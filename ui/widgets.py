@@ -431,7 +431,7 @@ class ClippingsTableWidget(QTableWidget):
             for r in rows_to_delete:
                 clip = self.item(r, 0).data(Qt.UserRole)
                 snippet = clip.content[:300].replace('\n', ' ') + "..." if len(clip.content) > 300 else clip.content
-                details_list.append(f"[{clip.type.upper()}] {clip.book_title}\n{snippet}\n")
+                details_list.append(f"[{clip.entry_type.upper()}] {clip.book_title}\n{snippet}\n")
             
             detailed_text = "--- ITEMS TO BE REMOVED ---\n\n" + "\n".join(details_list)
 

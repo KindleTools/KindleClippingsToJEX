@@ -13,9 +13,9 @@ class TestClippingsService(unittest.TestCase):
         self.mock_csv = MagicMock()
         self.mock_md = MagicMock()
         
-        self.service.exporters['jex'] = self.mock_jex
-        self.service.exporters['csv'] = self.mock_csv
-        self.service.exporters['md'] = self.mock_md
+        self.service.exporters_cache['jex'] = self.mock_jex
+        self.service.exporters_cache['csv'] = self.mock_csv
+        self.service.exporters_cache['md'] = self.mock_md
 
     def test_process_jex_format_strategy(self):
         clippings = [MagicMock(spec=Clipping)]

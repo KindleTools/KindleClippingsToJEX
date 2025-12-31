@@ -9,7 +9,7 @@ class TestClippingModel(unittest.TestCase):
             book_title="Test Book",
             author="Test Author",
             content="Test content",
-            type="highlight",
+            entry_type="highlight",
             date_time=now,
             page="10",
             location="100-120"
@@ -18,7 +18,7 @@ class TestClippingModel(unittest.TestCase):
         self.assertEqual(clip.book_title, "Test Book")
         self.assertEqual(clip.author, "Test Author")
         self.assertEqual(clip.content, "Test content")
-        self.assertEqual(clip.type, "highlight")
+        self.assertEqual(clip.entry_type, "highlight")
         self.assertEqual(clip.date_time, now)
         self.assertEqual(clip.page, "10")
         self.assertEqual(clip.location, "100-120")

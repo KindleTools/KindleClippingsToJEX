@@ -13,15 +13,12 @@ logger = logging.getLogger("KindleToJex.Service")
 
 class ClippingsService:
     def __init__(self, language_code="es"):
-        self.parser = KindleClippingsParser(language_code=language_code)
+        from utils.config_manager import get_config_manager
+        lang_path = get_config_manager().get_resource_path('languages.json')
+        self.parser = KindleClippingsParser(language_code=language_code, language_file=lang_path)
         
-        # Strategy Registry
-        self.exporters: Dict[str, BaseExporter] = {
-            'jex': JoplinExporter(),
-            'csv': CsvExporter(),
-            'md': MarkdownExporter(),
-            'json': JsonExporter()
-        }
+        # Strategy Registry - Lazy Loading Cache
+        self.exporters_cache: Dict[str, BaseExporter] = {}
 
     def process_clippings(self, input_file: str, output_file: str, 
                          root_notebook_name: str, 
@@ -70,9 +67,24 @@ class ClippingsService:
             raise e
 
     def _get_exporter(self, format_code: str) -> BaseExporter:
-        """Factory method to get the correct strategy."""
+        """Factory method to get the correct strategy with Lazy Loading."""
         code = format_code.lower()
-        if code not in self.exporters:
+        
+        if code in self.exporters_cache:
+            return self.exporters_cache[code]
+
+        exporter = None
+        if code == 'jex':
+            exporter = JoplinExporter()
+        elif code == 'csv':
+            exporter = CsvExporter()
+        elif code == 'md':
+            exporter = MarkdownExporter()
+        elif code == 'json':
+            exporter = JsonExporter()
+        else:
             logger.warning(f"Unknown format '{format_code}', defaulting to 'jex'")
-            return self.exporters['jex']
-        return self.exporters[code]
+            return self._get_exporter('jex')
+            
+        self.exporters_cache[code] = exporter
+        return exporter

@@ -13,6 +13,8 @@ class SmartDeduplicator:
     2. Duplicate notes (keeping the latest version).
     """
 
+    OVERLAP_TOLERANCE_CHARS = 5
+
     def deduplicate(self, clippings: List[Clipping]) -> List[Clipping]:
         if not clippings:
             return []
@@ -31,8 +33,8 @@ class SmartDeduplicator:
         # 2. Process each book
         for key, book_clippings in books.items():
             # Separate Notes and Highlights
-            highlights = [c for c in book_clippings if c.type == 'highlight']
-            notes = [c for c in book_clippings if c.type == 'note']
+            highlights = [c for c in book_clippings if c.entry_type == 'highlight']
+            notes = [c for c in book_clippings if c.entry_type == 'note']
 
             # Process Highlights (Overlap Logic)
             self._flag_duplicates_highlights(highlights)
@@ -107,7 +109,7 @@ class SmartDeduplicator:
 
         for current in enhanced[1:]:
             # Check overlap between 'current' and the last 'survivor'
-            is_overlapping = (current['start'] >= survivor['start']) and (current['start'] <= survivor['end'] + 5)
+            is_overlapping = (current['start'] >= survivor['start']) and (current['start'] <= survivor['end'] + self.OVERLAP_TOLERANCE_CHARS)
             
             if is_overlapping:
                 # Decide which one is the duplicate

@@ -27,7 +27,7 @@ class TestClippingsTableWidget(unittest.TestCase):
                 page=1,
                 location="100",
                 date_time=datetime.now(),
-                type="highlight",
+                entry_type="highlight",
                 tags={"tag1"}
             ),
             Clipping(
@@ -37,7 +37,7 @@ class TestClippingsTableWidget(unittest.TestCase):
                 page=2,
                 location="101",
                 date_time=datetime.now(),
-                type="highlight",
+                entry_type="highlight",
                 tags={"tag2"}
             )
         ]

@@ -28,7 +28,7 @@ class CsvExporter(BaseExporter):
                 'book_title': clipping.book_title,
                 'author': clipping.author,
                 'content': clipping.content,
-                'type': clipping.type,
+                'type': clipping.entry_type,
                 'date_time': clipping.date_time.isoformat() if clipping.date_time else '',
                 'page': clipping.page,
                 'location': clipping.location,

@@ -6,17 +6,17 @@ import re
 
 DEFAULT_PATTERNS = {
     # Variations of "Highlight"
-    "highlight": re.compile(r'subrayado|Subrayado|Highlight|highlight', re.IGNORECASE),
+    "highlight": r'subrayado|Subrayado|Highlight|highlight',
     
     # Variations of "Note"
-    "note": re.compile(r'nota|Nota|Note|note', re.IGNORECASE),
+    "note": r'nota|Nota|Note|note',
     
     # Variations of "Page"
-    "page": re.compile(r'página|page|Page|pág\.', re.IGNORECASE),
+    "page": r'página|page|Page|pág\.',
     
     # Variations of "Added on"
-    "added": re.compile(r'Añadid[oa] el|Added on|Agregado el', re.IGNORECASE),
+    "added": r'Añadid[oa\.] el|Added on|Agregado el',
     
     # Variations of "Location"
-    "location": re.compile(r'posición|Pos\.|position|Position|location|Location|loc\.', re.IGNORECASE)
+    "location": r'posición|Pos\.|position|Position|location|Location|loc\.'
 }
