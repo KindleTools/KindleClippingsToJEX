@@ -55,8 +55,9 @@ The project features a completely redesigned, modern "Zen" interface focused on 
 
 #### Key GUI Features:
 - **Instant Auto-Load**: Automatically detects and loads `data/My Clippings.txt` on startup. If not found, a friendly "Empty State" guides you.
+- **Drag & Drop**: Simply drag your `My Clippings.txt` file onto the window to load it instantly.
 - **Smart Cleanup**: A **"♻️ Clean"** button appears automatically if duplicates or redundant highlights are detected. One click cleans up your file.
-- **Live Stats Dashboard**: The header updates in real-time to show exactly how many highlights are visible (e.g., *"Showing 12 of 521 highlights"*).
+- **Live Stats Dashboard**: The header updates in real-time to show statistics like **"Avg/Book"** (highlight density) and visible counts.
 - **Clean Data Table**: A clutter-free table view focusing on what matters:
   - **Date**: Sortable by timestamp.
   - **Book**: Filterable title.
@@ -129,7 +130,6 @@ The application uses a `config/config.json` file for default settings. You can c
 ```json
 {
     "creator": "Your Name",
-    "location": [0.0, 0.0, 0],
     "notebook_title": "Kindle Imports",
     "input_file": "data/My Clippings.txt",
     "output_file": "my_import",
@@ -212,12 +212,19 @@ The project follows a modular hexagon-like architecture to separate UI, Business
 To run the test suite and ensure everything is working correctly:
 
 ```bash
+```bash
 python -m unittest discover tests
+# For coverage report (optional)
+pip install coverage
+coverage run -m unittest discover tests
+coverage report -m
 ```
 
 ## Future Improvements
 The following features are planned for upcoming releases to further enhance the "Zen" experience:
 
+- **Bulk Tagging**: Add option to apply tags to multiple selected notes at once via the context menu.
+- **Search Book Online**: Context menu option to quickly search for a book's metadata or cover on Goodreads/Google based on the title.
 - **📅 Reading Timeline**: A visual heatmap or bar chart to visualize your reading habits over time (e.g., "When did I read the most?").
 - **🏷️ Tag Cloud & Drag-and-Drop**: A sidebar showing your most used tags. Simply drag a tag onto a note to assign it instantly!
 - **👁️ Markdown Preview**: Toggle between the raw text editor and a rendered Markdown preview to see exactly how your notes will look in Joplin.

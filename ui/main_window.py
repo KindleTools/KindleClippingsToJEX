@@ -24,8 +24,9 @@ class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
         self.config = get_config_manager()
-        self.setWindowTitle("Kindle Clippings Manager")
+        self.setWindowTitle("Kindle Clippings to Joplin Exporter")
         self.resize(1200, 800)
+        self.setAcceptDrops(True) # Enable Drag and Drop
         
         self.clippings = []
         
@@ -38,9 +39,6 @@ class MainWindow(QMainWindow):
         self.setup_ui()
         self.apply_styles()
 
-        # Enable Drag & Drop
-        self.setAcceptDrops(True)
-        
         # Connect Empty State Click
         self.empty_page.clicked.connect(self.load_file_dialog)
         
@@ -91,6 +89,8 @@ class MainWindow(QMainWindow):
         self.table.rows_filtered.connect(self.update_stats_label)
         # Connect context menu export signal
         self.table.request_export_selection.connect(self.export_selection_handler)
+        # Connect status feedback from table (e.g. Copy actions)
+        self.table.status_message.connect(self.statusBar().showMessage)
         
         self.text_editor = QTextEdit()
         self.text_editor.setPlaceholderText("Select a note to edit...")
@@ -125,9 +125,10 @@ class MainWindow(QMainWindow):
         self.lbl_stat_books = create_stat_label("0\nBooks")
         self.lbl_stat_authors = create_stat_label("0\nAuthors")
         self.lbl_stat_tags = create_stat_label("0\nTags")
+        self.lbl_stat_avg = create_stat_label("0.0\nAvg/Book")
         self.lbl_stat_time = create_stat_label("0\nDays")
         
-        for lbl in [self.lbl_stat_total, self.lbl_stat_books, self.lbl_stat_authors, self.lbl_stat_tags, self.lbl_stat_time]:
+        for lbl in [self.lbl_stat_total, self.lbl_stat_books, self.lbl_stat_authors, self.lbl_stat_tags, self.lbl_stat_avg, self.lbl_stat_time]:
             layout.addWidget(lbl)
             
         return panel
@@ -146,6 +147,9 @@ class MainWindow(QMainWindow):
                 if clean:
                     all_tags.add(clean)
         unique_tags = len(all_tags)
+
+        # Average Highlights per Book
+        avg_density = total / unique_books if unique_books > 0 else 0
         
         # Calculate Time Span
         days_span = 0
@@ -164,6 +168,7 @@ class MainWindow(QMainWindow):
         self.lbl_stat_books.setText(fmt(unique_books, "Books"))
         self.lbl_stat_authors.setText(fmt(unique_authors, "Authors"))
         self.lbl_stat_tags.setText(fmt(unique_tags, "Tags"))
+        self.lbl_stat_avg.setText(fmt(f"{avg_density:.1f}", "Avg/Book"))
         self.lbl_stat_time.setText(fmt(days_span, "Days Span"))
 
     def _setup_header(self):
@@ -368,6 +373,31 @@ class MainWindow(QMainWindow):
     def on_load_error(self, error_msg):
         self.progress.close()
         QMessageBox.critical(self, "Error", f"Error reading file:\n{error_msg}")
+
+    def on_export_error(self, message):
+        """Standardized error handler for export thread."""
+        QMessageBox.critical(self, "Export Error", f"An error occurred during export:\n\n{message}")
+
+    # --- Drag and Drop Events ---
+    def dragEnterEvent(self, event):
+        """Accepts file drops if they contain text files."""
+        if event.mimeData().hasUrls():
+            # Accept if at least one file is a text file
+            for url in event.mimeData().urls():
+                if url.toLocalFile().lower().endswith('.txt'):
+                    event.acceptProposedAction()
+                    return
+        event.ignore()
+
+    def dropEvent(self, event):
+        """Handles the file drop."""
+        files = [u.toLocalFile() for u in event.mimeData().urls()]
+        if not files: return
+        
+        file_path = files[0]
+        # Allow .txt or files without extension (often the case for raw clippings)
+        if os.path.isfile(file_path):
+             self.load_file(file_path)
 
     def update_stats_label(self, visible_count):
         """Updates the subtitle label with the count of visible/total items."""

@@ -1,9 +1,12 @@
 
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, 
                             QHeaderView, QAbstractItemView, QLineEdit, QStyledItemDelegate, 
-                            QMenu, QAction)
+                            QMenu, QAction, QApplication)
 from PyQt5.QtCore import Qt, pyqtSignal
 import os
+import json
+import csv
+import io
 
 class EmptyStateWidget(QWidget):
     """
@@ -119,6 +122,7 @@ class ClippingsTableWidget(QTableWidget):
     row_selected = pyqtSignal(str) 
     rows_filtered = pyqtSignal(int)
     request_export_selection = pyqtSignal(list) # Emits list of row indices to export
+    status_message = pyqtSignal(str, int) # message, duration_ms
 
     def __init__(self, parent=None):
         super().__init__(parent)
@@ -348,13 +352,84 @@ class ClippingsTableWidget(QTableWidget):
         del_action.triggered.connect(lambda: self.delete_rows(rows))
         menu.addAction(del_action)
         
-        # Smart Helper
+        # Copy Actions
         menu.addSeparator()
-        del_dupes_action = QAction("Clean Up: Delete All Detected Duplicates", self)
-        del_dupes_action.triggered.connect(self.delete_all_duplicates)
-        menu.addAction(del_dupes_action)
+        
+        copy_csv_action = QAction("Copy as CSV", self)
+        copy_csv_action.triggered.connect(lambda: self.copy_to_clipboard_csv(rows))
+        menu.addAction(copy_csv_action)
+        
+        copy_json_action = QAction("Copy as JSON", self)
+        copy_json_action.triggered.connect(lambda: self.copy_to_clipboard_json(rows))
+        menu.addAction(copy_json_action)
+        
+        md_label = "Copy as Markdown"
+        copy_md_action = QAction(md_label, self)
+        copy_md_action.triggered.connect(lambda: self.copy_to_clipboard_md(rows))
+        menu.addAction(copy_md_action)
+
+        # Removed 'Clean Up' as requested per user feedback (redundant with main button)
         
         menu.exec_(self.viewport().mapToGlobal(position))
+
+    def copy_to_clipboard_csv(self, rows):
+        """Copies selected rows to clipboard as CSV string."""
+        clippings = self.get_clippings_from_rows(rows)
+        if not clippings: return
+        
+        output = io.StringIO()
+        fieldnames = ['book_title', 'author', 'content', 'type', 'date_time', 'page', 'location', 'tags']
+        writer = csv.DictWriter(output, fieldnames=fieldnames)
+        writer.writeheader()
+        
+        for clipping in clippings:
+            writer.writerow({
+                'book_title': clipping.book_title,
+                'author': clipping.author,
+                'content': clipping.content,
+                'type': clipping.type,
+                'date_time': clipping.date_time.isoformat() if clipping.date_time else '',
+                'page': clipping.page,
+                'location': clipping.location,
+                'tags': ', '.join(clipping.tags)
+            })
+            
+        QApplication.clipboard().setText(output.getvalue())
+        self.status_message.emit(f"✅ Copied {len(clippings)} rows as CSV", 3000)
+
+    def copy_to_clipboard_json(self, rows):
+        """Copies selected rows to clipboard as JSON string."""
+        clippings = self.get_clippings_from_rows(rows)
+        if not clippings: return
+        
+        data_list = []
+        for clip in clippings:
+             data_list.append({
+                'book_title': clip.book_title,
+                'author': clip.author,
+                'content': clip.content,
+                'date': clip.date_time.isoformat() if clip.date_time else None,
+                'tags': list(clip.tags)
+            })
+            
+        QApplication.clipboard().setText(json.dumps(data_list, indent=2, ensure_ascii=False))
+        self.status_message.emit(f"✅ Copied {len(clippings)} rows as JSON", 3000)
+
+    def copy_to_clipboard_md(self, rows):
+        """Copies selected rows to clipboard as Markdown text."""
+        clippings = self.get_clippings_from_rows(rows)
+        if not clippings: return
+        
+        output = []
+        for clip in clippings:
+            # Simple MD format for clipboard (no YAML to avoid clutter when pasting)
+            md = f"> {clip.content}\n\n— *{clip.book_title}* by **{clip.author}**"
+            if clip.tags:
+                md += f" #{' #'.join(clip.tags)}"
+            output.append(md)
+            
+        QApplication.clipboard().setText("\n\n---\n\n".join(output))
+        self.status_message.emit(f"✅ Copied {len(clippings)} rows as Markdown", 3000)
 
     def delete_all_duplicates(self, silent_if_none=False):
         """Removes all rows visually marked as duplicate. Returns count deleted."""

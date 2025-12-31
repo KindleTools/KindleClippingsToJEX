@@ -1,51 +1,114 @@
 # Contributing to KindleClippingsToJEX
 
-Thank you for your interest in contributing to KindleClippingsToJEX!
+First off, huge thanks for taking the time to contribute! 🙌
 
-## Getting Started
+The following is a set of guidelines for contributing to KindleClippingsToJEX. These are mostly guidelines, not rules. Use your best judgment, and feel free to propose changes to this document in a pull request.
 
-1.  **Fork** the repository on GitHub.
-2.  **Clone** your fork locally.
-3.  Create a **virtual environment** and install dependencies:
-    ```bash
-    python -m venv .venv
-    pip install -r requirements.txt
-    ```
+## 🛠️ Development Setup
 
-## Development Workflow
-1.  Create a new **branch** for your feature or bugfix:
-    ```bash
-    git checkout -b feature/my-new-feature
-    ```
-2.  Make your changes. Please adhere to the existing code style and modular structure.
-3.  **Validate** your changes. Run the quality suite to fix linting errors and run tests:
-    ```bash
-    # Fix style issues automatically
-    ruff check --fix .
-    ruff format .
-    
-    # Run tests
-    python -m unittest discover tests
-    ```
-4.  Commit your changes with clear, descriptive messages.
+This project uses modern Python packaging via `pyproject.toml`.
 
-## Pull Requests
-1.  Push your branch to your fork.
-2.  Open a **Pull Request** against the `main` branch.
-3.  Describe your changes and the problem they solve.
-4.  Ensure all checks (Quality & Build) pass on GitHub.
+### 1. Requirements
+- Python 3.8+
+- Git
 
-## Code Structure
--   **`domain/`**: Data classes (Clipping, Note) following DDD principles.
--   **`parsers/`**: Logic for reading and parsing Kindle text files.
--   **`services/`**: Application logic combining parsers and exporters.
--   **`exporters/`**: Logic for generating Joplin JEX files.
--   **`ui/`**: PyQt5 interfaces (Main Window, Dialogs).
--   **`config/`**: Configuration management. Use `config.sample.json` as a template.
+### 2. Setting up the Environment
+We recommend using a virtual environment.
 
-## Languages
+```bash
+# Clone the repo
+git clone https://github.com/KindleTools/KindleClippingsToJEX.git
+cd KindleClippingsToJEX
 
-If you want to add support for a new language:
-1.  Open `languages.json`.
-2.  Add a new key with the language code (e.g., `ru`).
-3.  Provide the regex patterns for `highlight`, `note`, `page`, `added`, and `location`.
+# Create Virtual Env
+python -m venv .venv
+
+# Activate it
+# Windows:
+.\.venv\Scripts\activate
+# Mac/Linux:
+source .venv/bin/activate
+```
+
+### 3. Installing Dependencies
+
+We distinguish between **Production** dependencies (needed to run the app) and **Development** dependencies (linting, testing, building).
+
+**For Contributors (Install Everything):**
+This command installs the package in editable mode along with dev tools (`ruff`, `pyinstaller`, `coverage`).
+```bash
+pip install -e .[dev]
+```
+
+**For Users (Minimal Install):**
+```bash
+pip install -r requirements.txt
+```
+
+---
+
+## 🧪 Running Tests
+
+We support `pytest` as the modern test runner (recommended).
+
+```bash
+# Run all tests (fast & pretty output)
+pytest
+
+# Check Coverage
+coverage run -m pytest
+coverage report -m
+```
+
+---
+
+## 🛡️ Type Checking
+
+We use [mypy](http://mypy-lang.org/) to prevent type errors. This is critical for keeping the codebase robust.
+
+```bash
+# Run type check
+mypy .
+```
+
+---
+
+## 🎨 Code Style
+
+We use [Ruff](https://github.com/astral-sh/ruff) for linting and formatting. It's fast and strict.
+
+```bash
+# Check for issues
+ruff check .
+
+# Fix auto-fixable issues
+ruff check --fix .
+```
+
+Please ensure your code follows PEP 8 standards.
+
+---
+
+## 📦 Building Executables
+
+To build the standalone `.exe` or binary for distribution:
+
+```bash
+# Windows
+build_exe.bat
+
+# Manual PyInstaller command (Cross-platform)
+pyinstaller --name KindleToJex --onefile --windowed --add-data "resources;resources" --icon=resources/icon.ico main.py
+```
+
+---
+
+## 🚀 Submitting Pull Requests
+
+1. Fork the repository.
+2. Create a new branch: `git checkout -b feature/amazing-feature`.
+3. Commit your changes.
+4. Push to the branch: `git push origin feature/amazing-feature`.
+5. Open a Pull Request.
+
+Happy Coding! 🚀
