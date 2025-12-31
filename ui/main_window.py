@@ -263,18 +263,44 @@ class MainWindow(QMainWindow):
             self.empty_page.clicked.connect(lambda: self.load_file(kindle_path))
 
     def detect_kindle(self):
-        """Scans connected drives for Kindle's My Clippings.txt."""
-        import string
-        drives = [f"{d}:\\" for d in string.ascii_uppercase if d not in "ABC"]
-        for drive in drives:
-            # Check widely common paths
-            candidates = [
-                os.path.join(drive, "documents", "My Clippings.txt"),
-                os.path.join(drive, "Kindle", "documents", "My Clippings.txt") 
-            ]
-            for c in candidates:
-                if os.path.exists(c):
-                    return c
+        """Scans connected drives for Kindle's My Clippings.txt (Cross-Platform)."""
+        import platform
+        system = platform.system()
+        
+        candidates = []
+        
+        if system == "Windows":
+             import string
+             drives = [f"{d}:\\" for d in string.ascii_uppercase if d not in "ABC"]
+             for drive in drives:
+                 candidates.append(os.path.join(drive, "documents", "My Clippings.txt"))
+                 candidates.append(os.path.join(drive, "Kindle", "documents", "My Clippings.txt"))
+                 
+        elif system == "Darwin": # macOS
+            # Kindles usually mount under /Volumes
+            base_dir = "/Volumes"
+            if os.path.exists(base_dir):
+                for vol in os.listdir(base_dir):
+                    if "Kindle" in vol: # Check for volumes with Kindle in name
+                         candidates.append(os.path.join(base_dir, vol, "documents", "My Clippings.txt"))
+
+        elif system == "Linux":
+            # Common mount points on Linux
+            search_roots = [f"/media/{os.environ.get('USER', '')}", "/run/media", "/mnt"]
+            for root in search_roots:
+                if os.path.exists(root):
+                    try:
+                        for vol in os.listdir(root):
+                            if "Kindle" in vol:
+                                candidates.append(os.path.join(root, vol, "documents", "My Clippings.txt"))
+                    except OSError:
+                        continue
+                        
+        # Check all candidates
+        for c in candidates:
+            if os.path.exists(c):
+                return c
+        
         return None
 
     def load_file_dialog(self):

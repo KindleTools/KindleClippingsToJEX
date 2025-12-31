@@ -16,7 +16,8 @@ class ConfigManager:
         "notebook_title": "Kindle Imports",
         "input_file": "",
         "output_file": "import_clippings",
-        "language": "auto"
+        "language": "auto",
+        "theme": "light"
     }
 
     def __init__(self, config_dir: str = "config", config_filename: str = "config.json"):

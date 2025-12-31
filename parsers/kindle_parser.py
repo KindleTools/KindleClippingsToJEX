@@ -76,16 +76,40 @@ class KindleClippingsParser:
         logger.warning("Auto-detection failed. Falling back to 'es'.")
         return 'es'
 
-    def parse_file(self, file_path: str, encoding: str = "utf-8-sig") -> List[Clipping]:
+    def parse_file(self, file_path: str, encoding: str = None) -> List[Clipping]:
+        """
+        Parses parsing with robust encoding handling.
+        """
         logger.info(f"Parsing file: {file_path}")
-        try:
-            with open(file_path, 'r', encoding=encoding) as f:
-                content = f.read()
-        except FileNotFoundError:
-            logger.error(f"File not found: {file_path}")
-            return []
-        except OSError as e:
-            logger.error(f"Error reading file {file_path}: {e}")
+        
+        if not os.path.exists(file_path):
+             logger.error(f"File not found: {file_path}")
+             return []
+
+        # List of encodings to try in order of likelihood
+        encodings_to_try = ['utf-8-sig', 'utf-8', 'cp1252', 'latin-1']
+        if encoding:
+            # If user provided specific encoding, try it first
+            encodings_to_try.insert(0, encoding)
+            
+        content = None
+        used_encoding = None
+
+        for enc in encodings_to_try:
+            try:
+                with open(file_path, 'r', encoding=enc) as f:
+                    content = f.read()
+                used_encoding = enc
+                logger.info(f"Successfully read file using encoding: {enc}")
+                break
+            except UnicodeDecodeError:
+                continue
+            except OSError as e:
+                logger.error(f"Error reading file {file_path}: {e}")
+                return []
+        
+        if content is None:
+            logger.error(f"Failed to decode file {file_path}. Tried encodings: {encodings_to_try}")
             return []
         
         raw_clippings = content.split(self.separator)
