@@ -17,7 +17,7 @@ def main():
     import ctypes
     import platform
     if platform.system() == 'Windows':
-        myappid = 'personal.kindletools.clippingstojex.1.0' # arbitrary string
+        myappid = 'personal.kindletools.clippingstojex.0.2.0' # arbitrary string
         ctypes.windll.shell32.SetCurrentProcessExplicitAppUserModelID(myappid)
 
     app = QApplication(sys.argv)

@@ -1,8 +1,12 @@
 # KindleClippingsToJEX
 
-![Python](https://img.shields.io/badge/python-3.8+-blue.svg)
-![License](https://img.shields.io/badge/license-MIT-green.svg)
-![Status](https://img.shields.io/badge/status-stable-brightgreen.svg)
+![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg?style=for-the-badge&logo=python&logoColor=white)
+![Platform](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-lightgrey?style=for-the-badge)
+![License](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)
+[![Build Status](https://img.shields.io/github/actions/workflow/status/KindleTools/KindleClippingsToJEX/build.yml?branch=main&style=for-the-badge&logo=github)](https://github.com/KindleTools/KindleClippingsToJEX/actions)
+[![Quality Check](https://img.shields.io/github/actions/workflow/status/KindleTools/KindleClippingsToJEX/quality.yml?label=Quality&style=for-the-badge&logo=github)](https://github.com/KindleTools/KindleClippingsToJEX/actions/workflows/quality.yml)
+[![Release](https://img.shields.io/github/v/release/KindleTools/KindleClippingsToJEX?style=for-the-badge&color=orange)](https://github.com/KindleTools/KindleClippingsToJEX/releases/latest)
+[![Ruff](https://img.shields.io/endpoint?url=https://raw.githubusercontent.com/astral-sh/ruff/main/assets/badge/v2.json)](https://github.com/astral-sh/ruff)
 
 **KindleClippingsToJEX** is a robust, professional-grade tool designed to process your Kindle highlights (`My Clippings.txt`) and convert them into a **Joplin Export File (.jex)**. It preserves all critical metadata (author, book, date, page/location) and intelligently organizes them into a clean notebook structure ready for direct import into [Joplin](https://joplinapp.org/).
 
@@ -12,11 +16,29 @@
 
 Whether you are a casual reader or a power user, this tool ensures your Kindle notes are never lost and always accessible in your favorite note-taking app.
 
+---
+
+## 📑 Table of Contents
+- [Features](#-features)
+- [Download](#-download)
+- [Installation](#-installation)
+- [Configuration](#-configuration)
+- [Usage (GUI & CLI)](#-usage)
+- [Project Structure](#-project-structure)
+- [Future Improvements](#-future-improvements)
+- [Troubleshooting](#-troubleshooting)
+- [Acknowledgements](#-acknowledgements)
+- [Contributing](#-contributing)
+- [License](#-license)
+
+---
+
 ## Features
 
 ### 🚀 Core Functionality
 - **JEX Native Export**: Generates standard `.jex` files (tarball of markdown files + JSON metadata) that import flawlessly into Joplin, preserving creation dates and official titles.
 - **Enhanced Metadata Extraction**: Intelligently extracts author names, book titles, locations, and page numbers. It even handles page numbers with zero-padding (e.g., `[0042]`) to ensure proper lexical sorting.
+  - **Geo-tagging Support**: Optionally add location data (lat/long) to your imported notes via `config.json`. Joplin uses this to display your notes on a map (via OpenStreetMap).
 - **Smart Tagging**: Converts your Kindle notes into Joplin tags. Supports splitting multiple tags by comma, semicolon, or period (e.g., "productivity, psychology").
 - **Smart Deduplication**: Intelligent algorithm that detects and merges:
   - **Overlapping highlights**: Keeps the longest/most complete version of a correction.
@@ -161,19 +183,21 @@ python cli.py --input "data/old_clippings.txt" --no-clean
 The project follows a modular hexagon-like architecture to separate UI, Business Logic, and Data Parsing:
 
 ```
-├── main.py                        # GUI Entry Point
-├── cli.py                         # CLI Entry Point
+├── .github/                       # CI/CD Workflows (GitHub Actions)
+├── config/                        # Configuration Settings
+├── data/                          # Default Input Directory
+├── domain/                        # Data Models (DDD)
+├── exporters/                     # JEX/Export Logic
+├── parsers/                       # Kindle Parsing Logic
+├── resources/                     # Static Assets (Icons, Styles)
+├── services/                      # Business Logic & Orchestration
+├── tests/                         # Unit Tests
 ├── ui/                            # GUI Layer (PyQt5)
-│   ├── main_window.py             # Main Window Orchestrator (Controllers & Signals)
-│   └── widgets.py                 # Reusable UI Components (Table, Search, Delegates)
-├── config/                        # Configuration Management
-├── domain/                        # Core Data Models (Clipping, Note)
-├── parsers/                       # Text Parsing Logic (Regex & State Machines)
-├── services/                      # Application Business Logic (Import/Export Flow)
-├── exporters/                     # JEX Generation Logic (Tarball packing)
-├── utils/                         # Logging and Helpers
-├── resources/                     # Static Assets
-└── tests/                         # Unit Tests
+├── utils/                         # Shared Utilities & Logging
+├── build_exe.bat                  # Windows Build Script
+├── cli.py                         # CLI Entry Point
+├── main.py                        # GUI Entry Point
+└── pyproject.toml                 # Project Definition
 ```
 
 ## Running Tests
@@ -192,6 +216,27 @@ The following features are planned for upcoming releases to further enhance the 
 - **👁️ Markdown Preview**: Toggle between the raw text editor and a rendered Markdown preview to see exactly how your notes will look in Joplin.
 - **🔍 Smart Search**: Advanced filtering capabilities, such as `book:Dune` or `tag:philosophy` for power users.
 - **⚠️ Confidence Indicator**: Visual cues (colors or icons) in the table to clearly highlight rows marked as "duplicates" before you clean them.
+- **🔔 Update Checker**: Automatically notify when a new version is available on GitHub.
+- **⌨️ Global Shortcuts**: Add keyboard shortcuts (Ctrl+O, Ctrl+Q) for faster navigation.
+- **ℹ️ About Dialog**: A dedicated screen with version info, credits, and license details.
+
+## 💡 Troubleshooting
+
+**The app doesn't detect my Kindle automatically.**
+> Ensure your Kindle is connected via USB and recognized as a drive by your computer. The app looks for `documents/My Clippings.txt` in standard drive letters.
+
+**My highlights have the wrong encoding (weird characters).**
+> The app tries to auto-detect UTF-8 or UTF-8-SIG. If you see weird characters, open `config/config.json` and try changing your system language settings or saving your clippings file as UTF-8.
+
+**I see "No module named ui" errors when running from source.**
+> Make sure you are running the script from the root directory: `python main.py`, not from inside a subdirectory.
+
+## 🤝 Acknowledgements
+
+Special thanks to the open-source libraries that make this possible:
+- **[PyQt5](https://riverbankcomputing.com/software/pyqt/intro)** for the beautiful GUI framework.
+- **[dateparser](https://dateparser.readthedocs.io/)** for the magical multi-language date parsing.
+- **[Joplin](https://joplinapp.org/)** for providing an excellent note-taking ecosystem.
 
 ## Contributing
 
