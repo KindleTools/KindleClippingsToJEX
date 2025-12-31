@@ -1,13 +1,13 @@
 
 import unittest
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 import sys
 import os
 
 # Add project root to path
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
-from PyQt5.QtWidgets import QApplication, QTableWidgetItem
+from PyQt5.QtWidgets import QApplication
 from PyQt5.QtCore import Qt
 from ui.widgets import ClippingsTableWidget
 from domain.models import Clipping

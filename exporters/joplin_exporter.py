@@ -1,4 +1,3 @@
-import os
 import tarfile
 import io
 from enum import IntEnum
@@ -140,9 +139,6 @@ class JoplinEntityBuilder:
             'user_created_time': now,
             'user_updated_time': now,
             'latitude': latitude,
-            'longitude': longitude,
-            'altitude': altitude,
-            'author': author,
             'longitude': longitude,
             'altitude': altitude,
             'author': author,

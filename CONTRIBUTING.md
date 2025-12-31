@@ -13,31 +13,35 @@ Thank you for your interest in contributing to KindleClippingsToJEX!
     ```
 
 ## Development Workflow
-
 1.  Create a new **branch** for your feature or bugfix:
     ```bash
     git checkout -b feature/my-new-feature
     ```
-2.  Make your changes. Please adhere to the existing code style and modular structure in `src/`.
-3.  **Test** your changes. If you modify the parser, run the unit tests:
+2.  Make your changes. Please adhere to the existing code style and modular structure.
+3.  **Validate** your changes. Run the quality suite to fix linting errors and run tests:
     ```bash
+    # Fix style issues automatically
+    ruff check --fix .
+    ruff format .
+    
+    # Run tests
     python -m unittest discover tests
     ```
 4.  Commit your changes with clear, descriptive messages.
 
 ## Pull Requests
-
 1.  Push your branch to your fork.
 2.  Open a **Pull Request** against the `main` branch.
 3.  Describe your changes and the problem they solve.
+4.  Ensure all checks (Quality & Build) pass on GitHub.
 
 ## Code Structure
-
--   **`src/domain`**: Data classes and types.
--   **`src/parsers`**: Logic for reading and parsing text files.
--   **`src/services`**: application logic combining parsers and exporters.
--   **`src/exporters`**: Logic for writing JEX files.
--   **`config.json`**: Should never be committed if it contains real data. Use `config.sample.json` for template changes.
+-   **`domain/`**: Data classes (Clipping, Note) following DDD principles.
+-   **`parsers/`**: Logic for reading and parsing Kindle text files.
+-   **`services/`**: Application logic combining parsers and exporters.
+-   **`exporters/`**: Logic for generating Joplin JEX files.
+-   **`ui/`**: PyQt5 interfaces (Main Window, Dialogs).
+-   **`config/`**: Configuration management. Use `config.sample.json` as a template.
 
 ## Languages
 

@@ -1,7 +1,6 @@
 import sys
 import os
 import argparse
-import logging
 from services.clippings_service import ClippingsService
 from utils.logging_config import setup_logging
 from utils.config_manager import get_config_manager

@@ -2,7 +2,7 @@
 from PyQt5.QtWidgets import (QWidget, QVBoxLayout, QLabel, QTableWidget, QTableWidgetItem, 
                             QHeaderView, QAbstractItemView, QLineEdit, QStyledItemDelegate, 
                             QMenu, QAction)
-from PyQt5.QtCore import Qt, pyqtSignal, QEvent, QItemSelectionModel
+from PyQt5.QtCore import Qt, pyqtSignal
 import os
 
 class EmptyStateWidget(QWidget):
@@ -286,7 +286,7 @@ class ClippingsTableWidget(QTableWidget):
 
             # Apply visual style for Duplicates
             if clip.is_duplicate:
-                from PyQt5.QtGui import QColor, QFont
+                from PyQt5.QtGui import QColor
                 for col in range(self.columnCount()):
                     item = self.item(row, col)
                     # Dim color
@@ -344,7 +344,7 @@ class ClippingsTableWidget(QTableWidget):
         dupe_action.triggered.connect(lambda: self.duplicate_rows(rows))
         menu.addAction(dupe_action)
         
-        del_action = QAction(f"Delete Row(s)", self)
+        del_action = QAction("Delete Row(s)", self)
         del_action.triggered.connect(lambda: self.delete_rows(rows))
         menu.addAction(del_action)
         

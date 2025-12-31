@@ -1,6 +1,5 @@
 from PyQt5.QtWidgets import (QDialog, QVBoxLayout, QFormLayout, QComboBox, 
                             QLineEdit, QDialogButtonBox, QLabel, QDoubleSpinBox, QSpinBox)
-from PyQt5.QtCore import Qt
 from utils.config_manager import get_config_manager
 import os
 

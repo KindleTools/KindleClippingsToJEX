@@ -2,19 +2,15 @@
 import os
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QHBoxLayout, 
                             QPushButton, QLabel, QFileDialog, QSplitter, 
-                            QTextEdit, QMessageBox, QStackedWidget, QAction, QProgressDialog, QFrame)
+                            QTextEdit, QMessageBox, QStackedWidget, QProgressDialog, QFrame)
 from PyQt5.QtCore import Qt, QTimer
 
-from domain.models import Clipping
-from parsers.kindle_parser import KindleClippingsParser
 from services.clippings_service import ClippingsService
 from ui.widgets import EmptyStateWidget, ClippingsTableWidget, SearchBar
-from datetime import datetime
 
 from ui.settings_dialog import SettingsDialog
 from utils.config_manager import get_config_manager
 from ui.threads import LoadFileThread, ExportThread
-from PyQt5.QtCore import QFile, QTextStream
 
 class MainWindow(QMainWindow):
     """
