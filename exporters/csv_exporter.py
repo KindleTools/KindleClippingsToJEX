@@ -1,15 +1,17 @@
 import csv
-from typing import List
+from typing import List, Dict, Any
 from domain.models import Clipping
+from exporters.base import BaseExporter
 
-class CsvExporter:
+class CsvExporter(BaseExporter):
     """
     Handles the export of clippings to CSV format.
     """
     
-    def export_clippings(self, clippings: List[Clipping], output_file: str):
+    def export(self, clippings: List[Clipping], output_file: str, context: Dict[str, Any] = None):
         """
         Writes a list of Clipping objects to a CSV file.
+        Context is accepted but ignored for CSV.
         """
         # Ensure output filename ends with .csv
         if not output_file.lower().endswith('.csv'):
@@ -35,3 +37,7 @@ class CsvExporter:
                     })
         except Exception as e:
             raise IOError(f"Failed to write CSV file: {e}")
+
+    # Alias for backward compatibility during transitions, can be deprecated later
+    def export_clippings(self, clippings: List[Clipping], output_file: str):
+         self.export(clippings, output_file)

@@ -1,16 +1,17 @@
 import zipfile
 import re
-from typing import List
+from typing import List, Dict, Any
 from datetime import datetime
 from domain.models import Clipping
+from exporters.base import BaseExporter
 
-class MarkdownExporter:
+class MarkdownExporter(BaseExporter):
     """
     Handles the export of clippings to a ZIP file containing Markdown files with Yaml frontmatter.
     Standard format for Obsidian and other PKM tools.
     """
     
-    def export_clippings(self, clippings: List[Clipping], output_file: str, context: dict = None):
+    def export(self, clippings: List[Clipping], output_file: str, context: Dict[str, Any] = None):
         """
         Writes a list of Clipping objects to a ZIP file containing .md files organized by folders.
         Structure: Author/Book/Note.md
@@ -18,8 +19,6 @@ class MarkdownExporter:
         # Ensure output filename ends with .zip
         if not output_file.lower().endswith('.zip'):
             output_file += '.zip'
-            
-        context = context or {}
             
         try:
             with zipfile.ZipFile(output_file, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -32,17 +31,19 @@ class MarkdownExporter:
                     # Construct full path inside ZIP
                     full_path = f"{author_folder}/{book_folder}/{filename}"
                     
-                    content = self._generate_markdown_content(clipping, context)
+                    content = self._generate_markdown_content(clipping)
                     zipf.writestr(full_path, content)
                     
         except Exception as e:
             raise IOError(f"Failed to create Markdown/ZIP archive: {e}")
 
+    # Alias for legacy compatibility
+    def export_clippings(self, clippings: List[Clipping], output_file: str, context: Dict[str, Any] = None):
+        self.export(clippings, output_file, context)
+
     def _generate_filename(self, clipping: Clipping) -> str:
         """
         Generates a sanitized, unique filename for the note.
-        Format: "PageX - Date.md" or "Date - Hash.md" if page missing.
-        Keeps filenames shorter as deeper folder structure provides context.
         """
         date_str = clipping.date_time.strftime("%Y%m%d%H%M%S") if clipping.date_time else "000000"
         
@@ -52,7 +53,6 @@ class MarkdownExporter:
         elif clipping.location:
              prefix = f"Loc {clipping.location}"
              
-        # Hash to ensure uniqueness for multiple highlights on same page/time
         content_hash = hash(clipping.content) % 10000
         
         sanitized_prefix = self._sanitize_filename(prefix)
@@ -62,15 +62,14 @@ class MarkdownExporter:
         """Removes illegal characters for filenames."""
         return re.sub(r'[\\/*?:"<>|]', "", text).strip()
 
-    def _generate_markdown_content(self, clipping: Clipping, context: dict) -> str:
+    def _generate_markdown_content(self, clipping: Clipping) -> str:
         """
-        Generates the Markdown string with rich YAML Frontmatter.
+        Generates the Markdown string with clean YAML Frontmatter.
         """
         # Escape quotes in YAML strings to prevent breaking the format
         author = clipping.author.replace('"', '\\"')
         title = clipping.book_title.replace('"', '\\"')
         page_val = clipping.page if clipping.page else ""
-        loc_val = clipping.location if clipping.location else ""
         date_iso = clipping.date_time.isoformat() if clipping.date_time else ""
         
         # Format tags as a YAML list: [tag1, tag2]
