@@ -35,7 +35,8 @@ class ExportThread(QThread):
 
     def __init__(self, service: ClippingsService, clippings: List[Clipping], 
                  output_file: str, root_notebook: str, 
-                 location: Tuple[float, float, int], creator: str):
+                 location: Tuple[float, float, int], creator: str,
+                 export_format: str = 'jex'):
         super().__init__()
         self.service = service
         self.clippings = clippings
@@ -43,6 +44,7 @@ class ExportThread(QThread):
         self.root_notebook = root_notebook
         self.location = location
         self.creator = creator
+        self.export_format = export_format
 
     def run(self):
         try:
@@ -51,7 +53,8 @@ class ExportThread(QThread):
                 output_file=self.output_file,
                 root_notebook_name=self.root_notebook,
                 location=self.location,
-                creator_name=self.creator
+                creator_name=self.creator,
+                export_format=self.export_format
             )
             self.finished.emit(len(self.clippings))
         except Exception as e:

@@ -17,6 +17,7 @@ def parse_args():
     parser.add_argument('--notebook', '-n', help="Root notebook title in Joplin")
     parser.add_argument('--creator', '-c', help="Author name to use for created notes")
     parser.add_argument('--no-clean', action='store_true', help="Disable smart deduplication and cleaning")
+    parser.add_argument('--format', '-f', choices=['jex', 'csv'], default='jex', help="Output format: 'jex' (default) or 'csv'")
     return parser.parse_args()
 
 def main():
@@ -40,6 +41,7 @@ def main():
     logger.info(f"Input: {input_file}")
     logger.info(f"Output Target: {output_file}")
     logger.info(f"Language: {language}")
+    logger.info(f"Format: {args.format}")
     
     # Validate Input
     if not os.path.exists(input_file):
@@ -55,7 +57,8 @@ def main():
             root_notebook_name=notebook_title,
             location=location,
             creator_name=creator,
-            enable_deduplication=not args.no_clean
+            enable_deduplication=not args.no_clean,
+            export_format=args.format
         )
             
     except Exception as e:

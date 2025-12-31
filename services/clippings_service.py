@@ -3,13 +3,16 @@ import logging
 from domain.models import Clipping
 from parsers.kindle_parser import KindleClippingsParser
 from exporters.joplin_exporter import JexExportService, JoplinEntityBuilder
+from exporters.csv_exporter import CsvExporter
 
 logger = logging.getLogger("KindleToJex.Service")
 
 class ClippingsService:
     def __init__(self, language_code="es"):
         self.parser = KindleClippingsParser(language_code=language_code)
+        self.parser = KindleClippingsParser(language_code=language_code)
         self.exporter = JexExportService()
+        self.csv_exporter = CsvExporter()
         self.builder = JoplinEntityBuilder()
         
         self.authors_cache: Dict[str, str] = {}
@@ -22,7 +25,8 @@ class ClippingsService:
                          root_notebook_name: str, 
                          location: Tuple[float, float, int], 
                          creator_name: str,
-                         enable_deduplication: bool = True):
+                         enable_deduplication: bool = True,
+                         export_format: str = 'jex'):
         
         # Reset state for fresh run
         self.entities_to_export = []
@@ -43,21 +47,29 @@ class ClippingsService:
             deduplicator = SmartDeduplicator()
             final_clippings = deduplicator.deduplicate(clippings)
         
-        self._process_list(final_clippings, output_file, root_notebook_name, location, creator_name)
+        self._process_list(final_clippings, output_file, root_notebook_name, location, creator_name, export_format)
 
     def process_clippings_from_list(self, clippings: List[Clipping], output_file: str, 
                                    root_notebook_name: str, 
                                    location: Tuple[float, float, int], 
-                                   creator_name: str):
-         self._process_list(clippings, output_file, root_notebook_name, location, creator_name)
+                                   creator_name: str,
+                                   export_format: str = 'jex'):
+         self._process_list(clippings, output_file, root_notebook_name, location, creator_name, export_format)
 
     def _process_list(self, clippings: List[Clipping], output_file: str, 
                       root_notebook_name: str, 
                       location: Tuple[float, float, int], 
-                      creator_name: str):
+                      creator_name: str,
+                      export_format: str):
 
-        logger.info(f"Processing {len(clippings)} clippings for export...")
+        logger.info(f"Processing {len(clippings)} clippings for {export_format.upper()} export...")
 
+        if export_format.lower() == 'csv':
+            self.csv_exporter.export_clippings(clippings, output_file)
+            logger.info("CSV Export completed.")
+            return
+
+        # JEX Export Logic
         # Create Root Notebook
         root_nb = self.builder.create_notebook(root_notebook_name)
         self.entities_to_export.append(root_nb)

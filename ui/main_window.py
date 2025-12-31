@@ -189,7 +189,7 @@ class MainWindow(QMainWindow):
         self.btn_load.clicked.connect(self.load_file_dialog)
         self.btn_load.setCursor(Qt.PointingHandCursor)
         
-        self.btn_export = QPushButton("Export to JEX")
+        self.btn_export = QPushButton("Export Notes")
         self.btn_export.clicked.connect(self.export_jex)
         self.btn_export.setCursor(Qt.PointingHandCursor)
         self.btn_export.setEnabled(False)
@@ -415,7 +415,7 @@ class MainWindow(QMainWindow):
         if not default_output.endswith('.jex'):
              default_output += ".jex"
 
-        file_path, _ = QFileDialog.getSaveFileName(self, title, default_output, "Joplin Export (*.jex)")
+        file_path, _ = QFileDialog.getSaveFileName(self, title, default_output, "Joplin Export (*.jex);;CSV File (*.csv)")
         if not file_path:
             return
             
@@ -441,7 +441,8 @@ class MainWindow(QMainWindow):
             output_file=file_path,
             root_notebook=self.config.get('notebook_title', 'Kindle Imports'),
             location=tuple(self.config.get('location', [0,0,0])),
-            creator=self.config.get('creator', 'System')
+            creator=self.config.get('creator', 'System'),
+            export_format='csv' if file_path.lower().endswith('.csv') else 'jex'
         )
         self.export_thread.finished.connect(self.on_export_finished)
         self.export_thread.error.connect(self.on_export_error)
