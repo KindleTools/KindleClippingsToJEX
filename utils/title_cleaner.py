@@ -51,6 +51,10 @@ class TitleCleaner:
             return "Unknown Book"
 
         clean = title.strip()
+        
+        # Remove BOM and Zero Width Space if present
+        clean = clean.replace('\ufeff', '').replace('\u200b', '')
+        
         original = clean
 
         for pattern in TitleCleaner.PATTERNS:

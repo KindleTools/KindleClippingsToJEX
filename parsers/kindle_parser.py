@@ -140,8 +140,10 @@ class KindleClippingsParser:
             logger.error(f"Failed to decode file {file_path}. Tried encodings: {encodings_to_try}")
             return []
 
-        if content.startswith("\ufeff"):
-            content = content[1:]
+        # Global Sanitation: Remove invisible characters that cause issues
+        # \ufeff: BOM (Byte Order Mark)
+        # \u200b: Zero Width Space
+        content = content.replace("\ufeff", "").replace("\u200b", "")
 
         raw_clippings = content.split(self.separator)
 
