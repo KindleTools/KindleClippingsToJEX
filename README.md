@@ -1,6 +1,7 @@
 # KindleClippingsToJEX
 
 ![Python](https://img.shields.io/badge/python-3.10%2B-blue.svg?style=for-the-badge&logo=python&logoColor=white)
+![PyQt5](https://img.shields.io/badge/GUI-PyQt5-41CD52?style=for-the-badge&logo=qt&logoColor=white)
 ![Platform](https://img.shields.io/badge/platform-windows%20%7C%20macos%20%7C%20linux-lightgrey?style=for-the-badge)
 ![License](https://img.shields.io/badge/license-MIT-green.svg?style=for-the-badge)
 [![Build Status](https://img.shields.io/github/actions/workflow/status/KindleTools/KindleClippingsToJEX/build.yml?branch=main&style=for-the-badge&logo=github)](https://github.com/KindleTools/KindleClippingsToJEX/actions)
@@ -41,9 +42,9 @@ Whether you are a casual reader or a power user, this tool ensures your Kindle n
 - **Markdown Export (Obsidian)**: Generates a **.zip** archive containing individual `.md` files for each note. Each file includes YAML frontmatter (title, author, tags, date), making it fully compatible with **Obsidian**, Logseq, and other PKM tools.
 - **JSON Export**: Export raw data in **JSON** format for developers, backups, or custom processing scripts.
 - **Enhanced Metadata Extraction**: Intelligently extracts author names, book titles, locations, and page numbers. It even handles page numbers with zero-padding (e.g., `[0042]`) to ensure proper lexical sorting.
-  - **Geo-tagging Support**: Optionally add location data (lat/long) to your imported notes via `config.json`. Joplin uses this to display your notes on a map (via OpenStreetMap).
+  - **Geo-tagging Support**: Optionally add location data (lat/long/altitude) to your imported notes via `config.json`. Joplin uses this to display your notes on a map (via OpenStreetMap).
 - **Smart Synchronization System**: Say goodbye to duplicates!
-  - **Deterministic IDs**: Generates stable, content-based IDs for every note, notebook, and tag. This means you can re-export your Kindle file 100 times, and Joplin will intelligently **update** your existing notes instead of creating messy duplicates.
+  - **Deterministic IDs**: Generates stable, content-based IDs (SHA-256) for every note, notebook, and tag. This means you can re-export your Kindle file 100 times, and Joplin will intelligently **update** your existing notes instead of creating messy duplicates.
 - **Smart Tagging**: Converts your Kindle notes into Joplin tags. Supports splitting multiple tags by comma, semicolon, or period (e.g., "productivity, psychology").
 - **Smart Deduplication**: Intelligent algorithm that detects and merges:
   - **Overlapping highlights**: Keeps the longest/most complete version of a correction.
@@ -54,21 +55,24 @@ Whether you are a casual reader or a power user, this tool ensures your Kindle n
   - **Title Polishing**: Automatically cleans up book titles by removing clutter like " (Kindle Edition)", "(Spanish Edition)", "[eBook]", etc.
   - **Unicode (NFC) Normalization**: Ensures cross-platform compatibility (Windows/Mac/Linux) for special characters, preventing issues with Obsidian/Joplin search and linking.
   - **Typesetting Cleanup**: Fixes common Kindle issues like double spaces, spaces before punctuation (e.g., `Hello , world`), and capitalization errors.
+  - **De-hyphenation**: Fixes broken words from PDF line breaks (e.g., `word-\n suffix` → `wordsuffix`).
   - **Invisible Character Removal**: Strips byte-order marks (BOM) and zero-width spaces that often corrupt text searches.
 - **Robustness & Transparency**:
   - **Detailed Error Reporting**: Intelligently skips corrupted blocks and provides a visual report with snippets of exactly what was skipped, ensuring data integrity without silent failures.
   - **Comprehensive Logging**: Maintains a full audit trail (info, debug, errors) of the process in `app.log` for troubleshooting.
   - **Strict Typing**: Built with Python Dataclasses to prevent data corruption.
-- **Multi-language Support**: Fully configurable parsing for Kindle devices set to English, Spanish, French, German, Italian, or Portuguese.
+- **Multi-language Support**: Automatic language detection from the clippings file, with manual override support. Supported languages: English, Spanish, French, German, Italian, and Portuguese.
 
-### 🎨 "Zen" Graphical User Interface (New)
+### 🎨 "Zen" Graphical User Interface
 The project features a completely redesigned, modern "Zen" interface focused on simplicity, focus, and efficiency.
 
 #### Key GUI Features:
-- **Instant Auto-Load**: Automatically detects and loads `data/My Clippings.txt` on startup. If not found, a friendly "Empty State" guides you.
+- **Instant Auto-Load**: Automatically detects and loads your configured clippings file on startup. If not found, a friendly "Empty State" guides you.
+- **Kindle Auto-Detection**: Scans connected USB drives (Windows, macOS, Linux) for a Kindle device and offers to import directly.
 - **Drag & Drop**: Simply drag your `My Clippings.txt` file onto the window to load it instantly.
 - **Smart Cleanup**: A **"♻️ Clean"** button appears automatically if duplicates or redundant highlights are detected. One click cleans up your file.
-- **Live Stats Dashboard**: The header updates in real-time to show statistics like **"Avg/Book"** (highlight density) and visible counts.
+- **🌗 Light / Dark Mode**: Toggle between light and dark themes with one click. Your preference is saved in `config.json`.
+- **Live Stats Dashboard**: The header updates in real-time to show statistics like **Highlights**, **Books**, **Authors**, **Tags**, **Avg/Book**, and **Days Span**.
 - **Clean Data Table**: A clutter-free table view focusing on what matters:
   - **Date**: Sortable by timestamp.
   - **Book**: Filterable title.
@@ -111,7 +115,7 @@ Simply download the latest executable for your system from the **[Releases Page]
 
 1. **Clone the repository:**
    ```bash
-   git clone https://github.com/yourusername/KindleClippingsToJEX.git
+   git clone https://github.com/KindleTools/KindleClippingsToJEX.git
    cd KindleClippingsToJEX
    ```
 
@@ -126,7 +130,11 @@ Simply download the latest executable for your system from the **[Releases Page]
 
 3. **Install dependencies:**
    ```bash
+   # For users (minimal install):
    pip install -e .
+
+   # For contributors (includes linting, testing, and build tools):
+   pip install -e .[dev]
    ```
 
 4. **Build the Executable (Optional):**
@@ -142,13 +150,23 @@ The application uses a `config/config.json` file for default settings. You can c
 {
     "creator": "Your Name",
     "notebook_title": "Kindle Imports",
-    "input_file": "data/My Clippings.txt",
-    "output_file": "my_import",
-    "language": "es"
+    "input_file": "path/to/My Clippings.txt",
+    "output_file": "import_clippings",
+    "language": "auto",
+    "theme": "light",
+    "location": [0.0, 0.0, 0]
 }
 ```
 
-*Supported languages:* `en`, `es`, `fr`, `de`, `it`, `pt`.
+| Key | Description |
+|-----|-------------|
+| `creator` | Your name (used as author metadata in exported notes). |
+| `notebook_title` | Root notebook name in Joplin for the import. |
+| `input_file` | Default path to your `My Clippings.txt` file. |
+| `output_file` | Base name for the exported file (extension added automatically). |
+| `language` | Parsing language: `auto` (recommended), `en`, `es`, `fr`, `de`, `it`, or `pt`. |
+| `theme` | GUI theme: `light` or `dark`. |
+| `location` | Geo-tagging as `[latitude, longitude, altitude]`. Joplin displays this on a map via OpenStreetMap. Set to `[0, 0, 0]` to disable. |
 
 ## Usage
 
@@ -198,18 +216,18 @@ python cli.py --input "data/old_clippings.txt" --no-clean
 
 ## Project Structure
 
-The project follows a modular hexagon-like architecture to separate UI, Business Logic, and Data Parsing:
+The project follows a modular hexagon-like architecture to separate UI, Business Logic, and Data Parsing. See [ARCHITECTURE.md](docs/ARCHITECTURE.md) for design decisions and rationale.
 
 ```
 ├── .github/                       # CI/CD Workflows (GitHub Actions)
 ├── config/                        # Configuration Settings
-├── data/                          # Default Input Directory
-├── domain/                        # Data Models (DDD)
-├── exporters/                     # JEX/Export Logic
-├── parsers/                       # Kindle Parsing Logic
-├── resources/                     # Static Assets (Icons, Styles)
+├── docs/                          # Architecture & Design Documentation
+├── domain/                        # Data Models (DDD Dataclasses)
+├── exporters/                     # Export Strategies (JEX, CSV, MD, JSON)
+├── parsers/                       # Kindle Parsing Logic (Multi-language)
+├── resources/                     # Static Assets (Icons, Styles, Language Patterns)
 ├── services/                      # Business Logic & Orchestration
-├── tests/                         # Unit Tests
+├── tests/                         # Unit & Integration Tests
 ├── ui/                            # GUI Layer (PyQt5)
 ├── utils/                         # Shared Utilities & Logging
 ├── build_exe.bat                  # Windows Build Script
@@ -223,12 +241,11 @@ The project follows a modular hexagon-like architecture to separate UI, Business
 To set up the development environment:
 
 ```bash
-# Install development dependencies
-pip install -r requirements.txt
-pip install mypy ruff coverage
+# Install all dependencies (app + dev tools: ruff, pytest, mypy, coverage, pyinstaller)
+pip install -e .[dev]
 ```
 
-Run quality checks manually:
+Run quality checks:
 ```bash
 # Type Checking
 mypy .
@@ -241,22 +258,22 @@ ruff format .
 Run the test suite:
 
 ```bash
-python -m unittest discover tests
-# For coverage report
-coverage run -m unittest discover tests
+# Run all tests
+pytest
+
+# With coverage report
+coverage run -m pytest
 coverage report -m
 ```
 
 ## Future Improvements
-The following features are planned for upcoming releases to further enhance the "Zen" experience:
+The following are the next planned features. See the full [Roadmap](roadmap.md) for the complete multi-phase development plan.
 
-- **🔌 Direct Joplin Sync**: Button to send notes directly to the running Joplin app via its local API (Port 41184), skipping the file import step.
-- **👁️ "New Only" Filter**: Checkbox to toggle between showing "All History" and "New Clippings Only" (since last import).
-- **🪟 State Persistence**: Remember window size, position, and column widths between sessions.
+- **🔌 Direct Joplin Sync**: Send notes directly to the running Joplin app via its local API (Port 41184), skipping the file import step.
+- **🗃️ SQLite Backend**: Persistent database for highlights with edit history and undo/redo.
 - **📅 Reading Timeline**: A visual heatmap or bar chart to visualize your reading habits over time.
-- **Tag Cloud & Drag-and-Drop**: Sidebar with most used tags for quick assignment.
-- **Smart Search**: Advanced filtering like `book:Dune` or `tag:philosophy`.
-- **Global Shortcuts**: Keyboard shortcuts (Ctrl+O, Ctrl+S) for power users.
+- **📚 Book Cover Enrichment**: Automatic cover art via Open Library API for a visual "bookshelf" experience.
+- **🧠 AI Auto-Tagging**: Zero-Shot classification for automatic highlight categorization.
 
 ## 💡 Troubleshooting
 
@@ -274,6 +291,7 @@ The following features are planned for upcoming releases to further enhance the 
 Special thanks to the open-source libraries that make this possible:
 - **[PyQt5](https://riverbankcomputing.com/software/pyqt/intro)** for the beautiful GUI framework.
 - **[dateparser](https://dateparser.readthedocs.io/)** for the magical multi-language date parsing.
+- **[Pillow](https://python-pillow.org/)** for image processing (icon conversion for cross-platform builds).
 - **[Joplin](https://joplinapp.org/)** for providing an excellent note-taking ecosystem.
 
 ## Contributing

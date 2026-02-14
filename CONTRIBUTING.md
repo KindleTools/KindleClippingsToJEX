@@ -9,7 +9,7 @@ The following is a set of guidelines for contributing to KindleClippingsToJEX. T
 This project uses modern Python packaging via `pyproject.toml`.
 
 ### 1. Requirements
-- Python 3.8+
+- Python 3.10+
 - Git
 
 ### 2. Setting up the Environment
