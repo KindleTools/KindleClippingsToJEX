@@ -85,4 +85,19 @@ El núcleo funcional de la herramienta está completo, robusto y probado:
     - **Daily Review / Active Recall**: Popup o vista de "Morning Wisdom" que muestra 3 highlights aleatorios antiguos para reforzar la memoria (estilo Anki/Readwise).
 - [ ] **Integración Obsidian Premium**:
     - Exportación Markdown con **YAML Frontmatter** rico para plugins como *Dataview*:
-        - Camops: `total_highlights`, `category`, `finished_date`, `cover_url`.
+        - Campos: `total_highlights`, `category`, `finished_date`, `cover_url`.
+
+## Fase 8: Technical Excellence (Robustez & Mantenibilidad)
+*Objetivo: Elevar el estándar de ingeniería para garantizar estabilidad en producción.*
+
+- [ ] **UI Robustness & Error Handling**:
+    - Implementar un **Global Exception Handler** (`sys.excepthook`) para capturar crashes no controlados y mostrar un diálogo de error amigable en lugar de cerrar la app.
+    - Revisar y blindar la comunicación entre hilos (Signals & Slots) para evitar `AttributeError` o condiciones de carrera en actualizaciones de UI.
+- [ ] **Logging de Producción**:
+    - Configurar `RotatingFileHandler` para guardar logs en el directorio de usuario (ej. AppData/Local) con rotación automática, esencial para debugging post-release.
+- [ ] **Testing de UI**:
+    - Integrar `pytest-qt` para realizar pruebas automáticas de la interfaz gráfica, simulando clics y flujos de usuario para prevenir regresiones.
+- [ ] **Refactorización de Plataforma**:
+    - Mover lógica específica de SO (como el fix de iconos de Windows en `main.py`) a un módulo utilitario `platform_utils.py` para mantener el entry point limpio.
+- [ ] **Build Automation (Cross-Platform)**:
+    - Crear scripts `Makefile` o `build.sh` para facilitar la compilación local en Linux/macOS usando PyInstaller, complementando el `build_exe.bat` de Windows.
