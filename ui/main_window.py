@@ -39,7 +39,7 @@ class MainWindow(QMainWindow):
         super().__init__()
         self.config = get_config_manager()
         self.setWindowTitle("Kindle Clippings to Joplin Exporter")
-        self.resize(1200, 800)
+        self.resize(1000, 700)
         self.setAcceptDrops(True)  # Enable Drag and Drop
 
         self.clippings = []
@@ -433,7 +433,7 @@ class MainWindow(QMainWindow):
             msg = f"✅ Loaded {len(clippings)} clippings"
             if cleaned_titles > 0:
                 msg += f" ({cleaned_titles} titles polished)"
-            self.status_message.emit(msg, 5000)
+            self.statusBar().showMessage(msg, 5000)
 
     def check_duplicates(self, clippings):
         """Checks for duplicates and updates the Cleanup button."""

@@ -7,20 +7,20 @@ QMainWindow {
 
 QWidget {
     font-family: 'Segoe UI', 'Inter', sans-serif;
-    font-size: 15px; 
+    font-size: 13px; /* Reduced from 15px */
     color: #E0E0E0; /* Soft white/grey */
 }
 
 /* 2. Typography */
 QLabel#h1 { 
-    font-size: 26px; 
+    font-size: 20px; /* Reduced from 26px */
     font-weight: 700; 
     color: #FFFFFF; 
-    margin-bottom: 6px;
+    margin-bottom: 4px;
 }
 
 QLabel#subtitle { 
-    font-size: 13px; 
+    font-size: 11px; /* Reduced from 13px */
     color: #B0B0B0; /* Dimmed secondary text */
     font-weight: 500;
 }
@@ -34,8 +34,8 @@ QLabel#statValue {
 QPushButton {
     background-color: #2D2D2D; /* Surface layer */
     border: 1px solid #424242;
-    padding: 8px 16px;
-    border-radius: 6px;
+    padding: 5px 10px; /* Reduced from 8px 16px */
+    border-radius: 4px;
     color: #E0E0E0;
     font-weight: 600;
 }
@@ -71,8 +71,8 @@ QPushButton:disabled {
 /* 4. Input Fields (Search, TextEdit) */
 QLineEdit, QTextEdit, QComboBox, QSpinBox { 
     border: 1px solid #424242; 
-    border-radius: 6px; 
-    padding: 8px; 
+    border-radius: 4px; 
+    padding: 4px; /* Reduced from 8px */
     background-color: #1E1E1E; /* Slightly lighter than base */
     color: #E0E0E0;
     selection-background-color: #1565C0;
@@ -89,7 +89,7 @@ QLineEdit:focus, QTextEdit:focus {
 #statsPanel {
     background-color: #1E1E1E;
     border: 1px solid #333333;
-    border-radius: 8px;
+    border-radius: 6px;
 }
 
 /* 6. Table Widget - The Core */
@@ -97,7 +97,7 @@ QTableWidget {
     background-color: #121212; /* Base color matching window */
     alternate-background-color: #1E1E1E; /* Subtle alternate striping */
     border: 1px solid #333333;
-    border-radius: 8px;
+    border-radius: 6px;
     gridline-color: #2C2C2C; /* Very subtle grid */
     color: #BDBDBD;
     selection-background-color: #0D47A1; /* Deep Blue Selection */
@@ -107,7 +107,7 @@ QTableWidget {
 /* Base item style */
 QTableWidget::item {
     border: none;
-    padding: 6px; 
+    padding: 3px; /* Reduced from 6px */
     background-color: transparent; /* Essential for alternate colors */
 }
 
@@ -120,7 +120,7 @@ QTableWidget::item:selected {
 /* Header styling */
 QHeaderView::section {
     background-color: #121212; /* Seamless header */
-    padding: 10px;
+    padding: 5px; /* Reduced from 10px */
     border: none;
     border-bottom: 2px solid #333333;
     font-weight: 600;
@@ -136,13 +136,13 @@ QTableCornerButton::section {
 QScrollBar:vertical {
     border: none;
     background: #121212;
-    width: 12px;
+    width: 10px; /* Reduced from 12px */
     margin: 0px;
 }
 QScrollBar::handle:vertical {
     background: #424242;
     min-height: 20px;
-    border-radius: 6px;
+    border-radius: 5px;
     border: 2px solid #121212; /* Creates padding effect */
 }
 QScrollBar::handle:vertical:hover {
@@ -156,7 +156,7 @@ QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical {
 QSplitter::handle { 
     background-color: #333333; 
     height: 1px; 
-    margin: 4px 0;
+    margin: 2px 0;
 }
 
 /* 9. Dialogs & Modals */
@@ -181,15 +181,15 @@ QLineEdit {
     color: #FFFFFF;
     border: 2px solid #64B5F6;
     border-radius: 4px;
-    padding: 6px; 
-    font-size: 15px;
+    padding: 4px; /* Reduced from 6px */
+    font-size: 13px; /* Reduced from 15px */
 }
 
 /* 12. Combo Boxes & Spin Boxes (Settings Dialog) */
 QComboBox, QSpinBox, QDoubleSpinBox {
     background-color: #2D2D2D;
     border: 1px solid #424242;
-    padding: 6px;
+    padding: 4px; /* Reduced from 6px */
     border-radius: 4px;
     color: #E0E0E0;
 }

@@ -35,20 +35,20 @@ class EmptyStateWidget(QWidget):
 
         icon_path = get_config_manager().get_resource_path("icon.png")
         if os.path.exists(icon_path):
-            pixmap = QPixmap(icon_path).scaled(84, 84, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # type: ignore
+            pixmap = QPixmap(icon_path).scaled(64, 64, Qt.KeepAspectRatio, Qt.SmoothTransformation)  # type: ignore
             self.icon_label.setPixmap(pixmap)
         else:
             self.icon_label.setText("📚")
-            self.icon_label.setStyleSheet("font-size: 64px; margin-bottom: 20px;")
+            self.icon_label.setStyleSheet("font-size: 48px; margin-bottom: 10px;")
 
         self.icon_label.setAlignment(Qt.AlignCenter)  # type: ignore
 
         self.msg_label = QLabel("Your Kindle library is waiting")
-        self.msg_label.setStyleSheet("font-size: 18px; font-weight: bold; color: #333;")
+        self.msg_label.setStyleSheet("font-size: 16px; font-weight: bold; color: #333;")
         self.msg_label.setAlignment(Qt.AlignCenter)  # type: ignore
 
         self.sub_label = QLabel("Load your 'My Clippings.txt' file to start organizing your notes.")
-        self.sub_label.setStyleSheet("font-size: 14px; color: #666; margin-top: 10px;")
+        self.sub_label.setStyleSheet("font-size: 12px; color: #666; margin-top: 5px;")
         self.sub_label.setAlignment(Qt.AlignCenter)  # type: ignore
 
         layout.addWidget(self.icon_label)
@@ -181,23 +181,10 @@ class ClippingsTableWidget(QTableWidget):
 
         self.setAlternatingRowColors(True)
         self.setShowGrid(False)
-        self.setStyleSheet(
-            """
-            QTableWidget {
-                background-color: white;
-                border: none;
-                gridline-color: #f0f0f0;
-            }
-            QTableWidget::item {
-                padding: 10px;
-                border-bottom: 1px solid #f0f0f0;
-            }
-            QTableWidget::item:selected {
-                background-color: #e3f2fd;
-                color: #000;
-            }
-        """
-        )
+        self.setAlternatingRowColors(True)
+        self.setShowGrid(False)
+        # Removed inline stylesheet to ensure Global QSS (styles.qss) takes precedence
+        # self.setStyleSheet(...)
 
         self._is_updating = False
 
