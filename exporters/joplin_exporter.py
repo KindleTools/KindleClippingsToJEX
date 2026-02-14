@@ -104,10 +104,15 @@ class JoplinEntityBuilder:
     @staticmethod
     def create_tag(title: str) -> JoplinTag:
         now = JoplinEntityBuilder._now()
-        id_seed = f"tag:{title.lower().strip()}"  # Tags should be case-insensitive id-wise
+        clean_title = title.strip()
+        # ID seed uses lowercase for deterministic dedup within the JEX file.
+        # But the title is preserved as-is so Joplin's Tag.loadByTitle()
+        # can match it against existing tags (SQLite COLLATE NOCASE
+        # doesn't handle accented Unicode chars, so case must match existing tags).
+        id_seed = f"tag:{clean_title.lower()}"
         return JoplinTag(
             id=JoplinEntityBuilder._generate_id(id_seed),
-            title=title,
+            title=clean_title,
             parent_id="",
             created_time=now,
             updated_time=now,
@@ -221,13 +226,16 @@ class JoplinExporter(BaseExporter):
         self.entities_to_export.append(note)
 
         # Handle Tags
+        # Cache key is lowercased to avoid self-duplicates within the JEX,
+        # but the actual tag title preserves original case for Joplin matching.
         for tag_str in clip.tags:
-            if tag_str not in self.tags_cache:
+            tag_key = tag_str.lower().strip()
+            if tag_key not in self.tags_cache:
                 tag_obj = self.builder.create_tag(tag_str)
                 self.entities_to_export.append(tag_obj)
-                self.tags_cache[tag_str] = tag_obj.id
+                self.tags_cache[tag_key] = tag_obj.id
 
-            tag_id = self.tags_cache[tag_str]
+            tag_id = self.tags_cache[tag_key]
             assoc = self.builder.create_tag_association(tag_id=tag_id, note_id=note.id)
             self.entities_to_export.append(assoc)
 
